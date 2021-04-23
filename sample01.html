@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="config.js"></script>
+        <script src="blazer.js"></script>
+        <title>Blazer Phaser</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Beispiel 1</h1>
+        <h3>Einzelne Gruppen schalten</h3>
+        <center>
+            <table id="Status">
+            </table>
+        </center>
+    </body>
+    <!-- This should go into a common JS file -->
+    <script>
+     states = [];
+     let ph1f = function(){ console.log('ph1f is triggered'); }
+     let zz = {};
+     zz.delay = 300;
+     zz.action = ph1f;
+     zz.params = [];
+     console.log(zz);
+     function updateRow(rowNum, states){
+         talkToESP(ipAddr[rowNum]+'SET?'+states);
+         let pre='R'+rowNum;
+         for(let i=0; i<3; i++){
+             let tgt = pre+i;
+             let state = states[i];
+             let xxx = document.getElementById(tgt);
+             if( state === '0'){
+                 xxx.innerHTML = 'Aus';
+                 xxx.setAttribute('class', 'button '+classes[i][0]);
+             }
+             else{
+                 xxx.innerHTML = 'An';
+                 xxx.setAttribute('class', 'button '+classes[i][1]);
+             }
+         }
+     }
+     function btnImm(btn, row, col){
+         if(states[row][col] === '0' ){
+             talkToESP(ipAddr[row]+'set?'+col+'=1');
+             states[row][col] = '1';
+             btn.innerHTML = 'An';
+             btn.setAttribute('class', 'button '+classes[col][1]);
+         }
+         else{
+             talkToESP(ipAddr[row]+'set?'+col+'=0');
+             states[row][col] = '0';
+             btn.innerHTML = 'Aus';
+             btn.setAttribute('class', 'button '+classes[col][0]);
+         }
+     }
+
+     function pageLoaded(){
+         /* Getting my parameters: */
+         /*
+         const queryString = window.location.search;
+         const urlParams = new URLSearchParams(queryString);
+         if(urlParams.has('whatever')){ doSomething(); }
+         */
+         let inner='';
+         inner = makeStatusTable(ipAddr);
+         //console.log(inner);
+         document.getElementById('Status').innerHTML = inner;
+         ipAddr.forEach(function(item, itemIdx){
+             updateRow(1, states[1]);
+         });
+         console.log('Loaded');
+     }
+    </script>
+</html>
+
+<!--
+     Find:
+     http://IP#/get  : Returns the status of LED as RGB triple 111 (all on) to 000 (all off)
+
+     Change one:
+     http://IP#/set?[R|G|B]=[0|1]
+
+     Change all:
+     http://IP#/SET?[0|1][0|1][0|1]  : Send triplet
+
+     http://IP#/delay?
+-->

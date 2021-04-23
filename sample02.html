@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="config.js"></script>
+        <script src="blazer.js"></script>
+        <title>Blazer Phaser</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Beispiel 2</h1>
+        <h3>Einzelne Gruppen schalten</h3>
+        <center>
+            <table id="settings">
+                <tr><td colspan="2">Startverzögerung</td></tr>
+                <tr>
+                    <td>Delay </td><td><input type="number" size="5" id="sDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="sJitter" value="500" /></td>
+                </tr>
+                <tr><td colspan="2">Einzelschritte</td></tr>
+                <tr>
+                    <td>Delay </td><td><input type="number" size="5" id="pDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="pJitter" value="500" /></td>
+                </tr>
+            </table>
+        </center>
+        <center>
+            <button id="Start" onclick="onBtnStart(this)">Start</button>
+            <table id="Status">
+            </table>
+        </center>
+    </body>
+    <script>
+     let ph1f = function(params){
+         //console.log('ph1f is triggered with '+params);
+         btnImm2(params[0], params[1], params[2]);
+     }
+
+
+     //setTimeout(phaseOver, 1000, phases);
+     function onBtnStart(btn){
+         let sDelay  = document.getElementById('sDelay').value * 1;
+         let sJitter = document.getElementById('sJitter').value* 1;
+         let pDelay  = document.getElementById('pDelay').value * 1;
+         let pJitter = document.getElementById('pJitter').value* 1;
+         let phases = [];
+         btn.innerHTML="Running";
+         shuffle(LEDs);
+         for(i=0; i<LEDs.length; i++){
+             r = ~~(LEDs[i]/3);
+             c = LEDs[i] - 3*r;
+             phases.push({'action': ph1f, 'delay':  300, 'params': [r,c,1]})
+             phases.push({'action': ph1f, 'delay': pDelay+Math.floor(Math.random()*pJitter), 'params': [r,c,0]});
+         }
+         setTimeout(phaseOver, sDelay+Math.floor(Math.random()*sJitter), phases, btn);
+     }
+     function phaseOver(phases, btn){
+         if (phases.length==0) return;
+         let i=0;
+         console.log(phases);
+         console.log(phases[0].params);
+         phases[0].action(phases[0].params);
+         setTimeout(function run() {
+             //btn.innerHTML=i;
+             i++;
+             if(i== phases.length){
+                 btn.innerHTML="Start";
+                 return;
+             }
+             phases[i].action( phases[i].params);
+             setTimeout(run, phases[i].delay);
+         }, phases[0].delay);
+
+     }
+
+     states = [];
+     LEDs   = [];
+     
+     function updateRow(rowNum, states){
+         talkToESP(ipAddr[rowNum]+'SET?'+states);
+         let pre='R'+rowNum;
+         for(let i=0; i<3; i++){
+             let tgt = pre+i;
+             let state = states[i];
+             let xxx = document.getElementById(tgt);
+             if( state === '0'){
+                 xxx.innerHTML = 'Aus';
+                 xxx.setAttribute('class', 'button '+classes[i][0]);
+             }
+             else{
+                 xxx.innerHTML = 'An';
+                 xxx.setAttribute('class', 'button '+classes[i][1]);
+             }
+         }
+     }
+
+     function pageLoaded(){
+         document.getElementById('Status').innerHTML = makeStatusTable(ipAddr);
+         ipAddr.forEach(function(item, itemIdx){
+             updateRow(1, states[1]);
+         });
+         console.log('Loaded');
+         for(i=0; i<ipAddr.length*3;i++){
+             LEDs[i] = i;
+         }
+         shuffle(LEDs);
+         console.log(LEDs);
+     }
+    </script>
+</html>
+
+<!--
+     Find:
+     http://IP#/get  : Returns the status of LED as RGB triple 111 (all on) to 000 (all off)
+
+     Change one:
+     http://IP#/set?[R|G|B]=[0|1]
+
+     Change all:
+     http://IP#/SET?[0|1][0|1][0|1]  : Send triplet
+
+     http://IP#/delay?
+-->
