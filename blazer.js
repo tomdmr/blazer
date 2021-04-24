@@ -23,8 +23,15 @@ function makeStatusTable(urlAddr){
 }
 /*
  * JS Zeugs um zu einem ESP an url zu reden.
+ * Um default parameter erweitert.
  */
-function talkToESP(url){
+function talkToESP(url, rspFunc, errFunc){
+    rspFunc = rspFunc || function(data){
+        console.log(data);
+    };
+    errFunc = errFunc || function(err){
+        console.log('talkToESP: Ooops: '+err);
+    }
     fetch(url)
         .then(function(response){
             if (response.status !== 200) {
@@ -33,13 +40,9 @@ function talkToESP(url){
                 return;
             }
             // Check for response
-            response.text().then(function(data){
-                console.log(data);
-            });
+            response.text().then(rspFunc);
         })
-        .catch(function (err){
-            console.log('oops: '+err);
-        });
+        .catch(errFunc);
 }
 function btnImm(btn, row, col){
     if(states[row][col] === '0' ){
@@ -74,12 +77,6 @@ function btnImm2(row, col, state){
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
-
-        // swap elements array[i] and array[j]
-        // we use "destructuring assignment" syntax to achieve that
-        // you'll find more details about that syntax in later chapters
-        // same can be written as:
-        // let t = array[i]; array[i] = array[j]; array[j] = t
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
