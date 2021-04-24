@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <!--
+         Form, um die Adressen der einzelnen Blazers möglichst einfach persistent zu speichern.
+         Letztendlich kommen die aus der FritzBox, oder was auch immer gerade als Access Point verwendet wird.
+         In der Tabelle werden sie verwaltet, und am Ende als Cookie lokal gespeichert.
+    -->
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="config.js"></script>
+        <script src="blazer.js"></script>
+        <title>Blazer Phaser-Cookie Jar</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Blazer Configuration</h1>
+
+        <div id="Blazertablediv">
+            <input type="button" id="addBlazerbutton" value="Add Blazers" onclick="insRow()"/><br/><br/>
+            <input type="button" id="fumpButton" value="fump" onclick="fump()"/><br/><br/>
+            <table id="BlazerTable" border="1">
+                <tr>
+                    <td>Blazer</td>
+                    <td>Adresse</td>
+                    <td>Status</td>
+                    <td>Test</td>
+                    <td>Delete?</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td><input size=25 type="text" id="addrBox" /></td>
+                    <td><input size=25 type="text" id="lngbox" readonly=true/></td>
+                    <td><input type="button" id="testBlazerButton" value="Test"  onclick="testBlazer(this)" /></td>
+                    <td><input type="button" id="delBlazerbutton" value="Delete" onclick="deleteRow(this)"  /></td>
+                </tr>
+            </table>
+        </div>
+    </body>
+    <script>
+     function renumberRows(){
+         let table = document.getElementById('BlazerTable');
+         for (let i = 1, row; row = table.rows[i]; i++) {
+             row.cells[0].innerHTML = i;
+         }
+     }
+
+     /*
+        Largely stolen from
+        https://stackoverflow.com/questions/6473111/add-delete-table-rows-dynamically-using-javascript
+      */
+     function deleteRow(row) {
+         let i = row.parentNode.parentNode.rowIndex;
+         if(document.getElementById('BlazerTable').rows.length>2){
+             document.getElementById('BlazerTable').deleteRow(i);
+             renumberRows();
+         }
+     }
+
+     function insRow() {
+         let x = document.getElementById('BlazerTable');
+         let new_row = x.rows[1].cloneNode(true);
+         let len = x.rows.length;
+         new_row.cells[0].innerHTML = len;
+
+         let inp1 = new_row.cells[1].getElementsByTagName('input')[0];
+         inp1.id += len;
+         inp1.value = '';
+         let inp2 = new_row.cells[2].getElementsByTagName('input')[0];
+         inp2.id += len;
+         inp2.value = '';
+         x.appendChild(new_row);
+         renumberRows();
+     }
+
+     /*
+      * Check blazer responsiveness 
+      * Find the address, issue a "GET" and wait for response or timeout
+      */
+     function testBlazer(aRow){
+         let i = aRow.parentNode.parentNode.rowIndex;
+         let row = document.getElementById('BlazerTable').rows[i];
+         let addr = row.getElementsByTagName('input')[0].value;
+         row.getElementsByTagName('input')[1].value = "Testing";
+         talkToESP2(
+             addr,
+             function(data){
+                 console.log(data);
+                 row.getElementsByTagName('input')[1].value = "OK";
+             },
+             function(err){
+                 row.getElementsByTagName('input')[1].value = "FAIL";
+             }
+         );
+     }
+
+     function fump(){
+         let inputs = document.getElementsByTagName('input');
+         console.log(inputs);
+     }
+     // returns the cookie with the given name,
+     // or undefined if not found
+     function getCookie(name) {
+         let matches = document.cookie.match(new RegExp(
+             "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+         ));
+         return matches ? decodeURIComponent(matches[1]) : undefined;
+     }
+     function removeCookies() {
+         let res = document.cookie;
+         let multiple = res.split(";");
+         for(let i = 0; i < multiple.length; i++) {
+             let key = multiple[i].split("=");
+             document.cookie = key[0]+" =; expires = Thu, 01 Jan 1970 00:00:00 UTC";
+         }
+     }
+
+     function pageLoaded(){
+         /*
+            //removeCookies();
+            //console.log(document.cookie);
+            oops = "config="+JSON.stringify(ipAddr)+"; samesite=lax";;
+            //console.log(oops);
+            cfg = getCookie('config');
+            console.log( cfg );
+            config = JSON.parse(cfg);
+            console.log( config );
+            //document.cookie=oops;
+            //document.cookie = "config="+JSON.stringify(ipAddr)+"; samestite=lax";;
+            // JSON.stringify( something )
+            // JSON.parse();
+          */
+     }
+    </script>
+</html>
