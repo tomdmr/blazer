@@ -20,7 +20,7 @@
     <script>
      states = [];
      function updateRow(rowNum, states){
-         talkToESP(ipAddr[rowNum]+'SET?'+states);
+         talkToESP(ipAddr[rowNum]+'SET?'+states[0]+states[1]+states[2]);
          let pre='R'+rowNum;
          for(let i=0; i<3; i++){
              let tgt = pre+i;
@@ -62,10 +62,10 @@
          document.getElementById('Status').innerHTML = inner;
          // Ask them how they feel
          ipAddr.forEach(function(item, itemIdx){
-             updateRow(1, states[1]);
+             updateRow(itemIdx, states[itemIdx]);
          });
          console.log('Loaded');
-         alert( document.cookie );
+         //alert( document.cookie );
      }
     </script>
 </html>
