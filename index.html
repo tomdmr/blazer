@@ -82,7 +82,7 @@
          let row = document.getElementById('BlazerTable').rows[i];
          let addr = row.getElementsByTagName('input')[0].value;
          row.getElementsByTagName('input')[1].value = "Testing";
-         talkToESP2(
+         talkToESP(
              addr,
              function(data){
                  console.log(data);

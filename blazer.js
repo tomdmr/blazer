@@ -26,6 +26,7 @@ function makeStatusTable(urlAddr){
  * Um default parameter erweitert.
  */
 function talkToESP(url, rspFunc, errFunc){
+    console.log('talkToESP: '+url);
     rspFunc = rspFunc || function(data){
         console.log(data);
     };
