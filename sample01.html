@@ -19,12 +19,6 @@
     <!-- This should go into a common JS file -->
     <script>
      states = [];
-     let ph1f = function(){ console.log('ph1f is triggered'); }
-     let zz = {};
-     zz.delay = 300;
-     zz.action = ph1f;
-     zz.params = [];
-     console.log(zz);
      function updateRow(rowNum, states){
          talkToESP(ipAddr[rowNum]+'SET?'+states);
          let pre='R'+rowNum;
@@ -56,35 +50,22 @@
              btn.setAttribute('class', 'button '+classes[col][0]);
          }
      }
-
+     /*
+      * Start-up function
+      */
      function pageLoaded(){
-         /* Getting my parameters: */
-         /*
-         const queryString = window.location.search;
-         const urlParams = new URLSearchParams(queryString);
-         if(urlParams.has('whatever')){ doSomething(); }
-         */
+         //document.cookie = "user=John"; 
          let inner='';
+         // Make table of blazers
          inner = makeStatusTable(ipAddr);
-         //console.log(inner);
+         // Insert into DOM
          document.getElementById('Status').innerHTML = inner;
+         // Ask them how they feel
          ipAddr.forEach(function(item, itemIdx){
              updateRow(1, states[1]);
          });
          console.log('Loaded');
+         alert( document.cookie );
      }
     </script>
 </html>
-
-<!--
-     Find:
-     http://IP#/get  : Returns the status of LED as RGB triple 111 (all on) to 000 (all off)
-
-     Change one:
-     http://IP#/set?[R|G|B]=[0|1]
-
-     Change all:
-     http://IP#/SET?[0|1][0|1][0|1]  : Send triplet
-
-     http://IP#/delay?
--->
