@@ -106,19 +106,8 @@
          }
          shuffle(LEDs);
          console.log(LEDs);
+         //alert( document.cookie );
+         alert(JSON.stringify( ipAddr));
      }
     </script>
 </html>
-
-<!--
-     Find:
-     http://IP#/get  : Returns the status of LED as RGB triple 111 (all on) to 000 (all off)
-
-     Change one:
-     http://IP#/set?[R|G|B]=[0|1]
-
-     Change all:
-     http://IP#/SET?[0|1][0|1][0|1]  : Send triplet
-
-     http://IP#/delay?
--->
