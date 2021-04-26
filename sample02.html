@@ -4,7 +4,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
         <link href="blazer.css" rel="stylesheet" type="text/css" />
-        <script src="config.js"></script>
+        <!-- <script src="config.js"></script>   -->
         <script src="blazer.js"></script>
         <title>Blazer Phaser</title>
     </head>
@@ -55,6 +55,16 @@
          }
          setTimeout(phaseOver, sDelay+Math.floor(Math.random()*sJitter), phases, btn);
      }
+
+     /*
+      * Function to run all phases.
+      * Parameter:
+      * phases: array of elements that contain 
+      *               - action: function(params) that is triggered in the beginning
+      *               - params: An array that is passed to the action
+      *               - delay: The fixed interval until the naxt phase is triggered
+      * btn   : The button that is reset at the and. This will go away and be replaced a function to call in the end...
+     */
      function phaseOver(phases, btn){
          if (phases.length==0) return;
          let i=0;
@@ -62,9 +72,8 @@
          console.log(phases[0].params);
          phases[0].action(phases[0].params);
          setTimeout(function run() {
-             //btn.innerHTML=i;
              i++;
-             if(i== phases.length){
+             if(i == phases.length){
                  btn.innerHTML="Start";
                  return;
              }
@@ -75,6 +84,7 @@
      }
 
      states = [];
+     ipAddr = [];
      LEDs   = [];
      
      function updateRow(rowNum, states){
@@ -96,18 +106,24 @@
      }
 
      function pageLoaded(){
+         /* Get Blazers from cookie */
+         let cfg = getCookie("config");
+         if( cfg ){
+             console.log('parsing');
+             ipAddr = JSON.parse(cfg);
+         }
+         /* Make Blazer Matrix in document */
          document.getElementById('Status').innerHTML = makeStatusTable(ipAddr);
          ipAddr.forEach(function(item, itemIdx){
-             updateRow(1, states[1]);
+             updateRow(itemIdx, states[itemIdx]);
          });
          console.log('Loaded');
+         /* List of LEDs to blink */
          for(i=0; i<ipAddr.length*3;i++){
              LEDs[i] = i;
          }
          shuffle(LEDs);
          console.log(LEDs);
-         //alert( document.cookie );
-         alert(JSON.stringify( ipAddr));
      }
     </script>
 </html>
