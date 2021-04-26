@@ -9,7 +9,6 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
         <link href="blazer.css" rel="stylesheet" type="text/css" />
-        <script src="config.js"></script>
         <script src="blazer.js"></script>
         <title>Blazer Phaser-Cookie Jar</title>
     </head>
@@ -17,24 +16,27 @@
         <h1>Blazer Configuration</h1>
 
         <div id="Blazertablediv">
-            <input type="button" id="addBlazerbutton" value="Add Blazers" onclick="insRow()"/><br/><br/>
-            <input type="button" id="fumpButton" value="fump" onclick="fump()"/><br/><br/>
-            <table id="BlazerTable" border="1">
-                <tr>
-                    <td>Blazer</td>
-                    <td>Adresse</td>
-                    <td>Status</td>
-                    <td>Test</td>
-                    <td>Delete?</td>
-                </tr>
-                <tr>
-                    <td>1</td>
-                    <td><input size=25 type="text" id="addrBox" /></td>
-                    <td><input size=25 type="text" id="lngbox" readonly=true/></td>
-                    <td><input type="button" id="testBlazerButton" value="Test"  onclick="testBlazer(this)" /></td>
-                    <td><input type="button" id="delBlazerbutton" value="Delete" onclick="deleteRow(this)"  /></td>
-                </tr>
-            </table>
+            <input type="button" id="addBlazerbutton" value="Add Blazers" onclick="insRow()"/><br/>
+            <input type="button" id="btnSaveConfig" value="Save as Cookie" onclick="saveConfig()"/><br/>
+            <input type="button" id="btnDelCookies" value="Delete all Cookies" onclick="removeCookies()"/><br/><br/>
+            <center>
+                <table id="BlazerTable" border="1">
+                    <tr>
+                        <td>Blazer</td>
+                        <td>Adresse</td>
+                        <td>Status</td>
+                        <td>Test</td>
+                        <td>Delete?</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td><input size=25 type="text" id="addrBox" /></td>
+                        <td><input size=25 type="text" id="lngbox" readonly=true/></td>
+                        <td><input type="button" id="testBlazerButton" value="Test"  onclick="testBlazer(this)" /></td>
+                        <td><input type="button" id="delBlazerbutton" value="Delete" onclick="deleteRow(this)"  /></td>
+                    </tr>
+                </table>
+            </center>
         </div>
     </body>
     <script>
@@ -57,7 +59,7 @@
          }
      }
 
-     function insRow() {
+     function insRow(preset) {
          let x = document.getElementById('BlazerTable');
          let new_row = x.rows[1].cloneNode(true);
          let len = x.rows.length;
@@ -65,7 +67,12 @@
 
          let inp1 = new_row.cells[1].getElementsByTagName('input')[0];
          inp1.id += len;
-         inp1.value = '';
+         if(preset){
+             inp1.value = preset;
+         }
+         else{
+             inp1.value = '';
+         }
          let inp2 = new_row.cells[2].getElementsByTagName('input')[0];
          inp2.id += len;
          inp2.value = '';
@@ -74,7 +81,7 @@
      }
 
      /*
-      * Check blazer responsiveness 
+      * Check blazer responsiveness
       * Find the address, issue a "GET" and wait for response or timeout
       */
      function testBlazer(aRow){
@@ -93,11 +100,6 @@
              }
          );
      }
-
-     function fump(){
-         let inputs = document.getElementsByTagName('input');
-         console.log(inputs);
-     }
      // returns the cookie with the given name,
      // or undefined if not found
      function getCookie(name) {
@@ -108,28 +110,40 @@
      }
      function removeCookies() {
          let res = document.cookie;
+         if( res === "") return;
          let multiple = res.split(";");
          for(let i = 0; i < multiple.length; i++) {
              let key = multiple[i].split("=");
              document.cookie = key[0]+" =; expires = Thu, 01 Jan 1970 00:00:00 UTC";
          }
      }
-
+     function saveConfig(){
+         // Update config from table
+         ipAddr = [];
+         console.log(document.getElementById('BlazerTable').rows.length);
+         let rows = document.getElementById('BlazerTable').rows;
+         for(i=1; i<rows.length; i++){
+             //let row = document.getElementById('BlazerTable').rows[i];
+             //console.log(row);
+             console.log(rows[i].getElementsByTagName('input')[0].value);
+             ipAddr.push(rows[i].getElementsByTagName('input')[0].value);
+         }
+         console.log(ipAddr);
+         // and save stuff
+         document.cookie = "config="+JSON.stringify(ipAddr)+"; SameSite=lax";
+     }
      function pageLoaded(){
-         /*
-            //removeCookies();
-            //console.log(document.cookie);
-            oops = "config="+JSON.stringify(ipAddr)+"; samesite=lax";;
-            //console.log(oops);
-            cfg = getCookie('config');
-            console.log( cfg );
-            config = JSON.parse(cfg);
-            console.log( config );
-            //document.cookie=oops;
-            //document.cookie = "config="+JSON.stringify(ipAddr)+"; samestite=lax";;
-            // JSON.stringify( something )
-            // JSON.parse();
-          */
+         let cfg = getCookie("config");
+         if( cfg ){
+             console.log('parsing');
+             config = JSON.parse(cfg);
+             console.log(config);
+             config.forEach(function(item, itemIdx){
+                 insRow(item);
+             });
+             document.getElementById('BlazerTable').deleteRow(1);
+             renumberRows();
+         }
      }
     </script>
 </html>
