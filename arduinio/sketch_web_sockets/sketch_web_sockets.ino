@@ -301,7 +301,7 @@ void loop() {
   if(touchDetected){
     touchDetected = false;
     ws.textAll("TOUCH");
-    Serial.println("TOUCH");
+    Serial.printf("TOUCH: %d\n", touchRead(T3));
   }
   if (interruptCounter > 0) {
     portENTER_CRITICAL(&timerMux);
@@ -310,8 +310,7 @@ void loop() {
 
     totalInterruptCounter++;
     Serial.print("An interrupt as occurred. Total number: ");
-    Serial.print(totalInterruptCounter); 
-    Serial.print(" Wifi is ");
-    Serial.println(WiFi.status());
+    Serial.print(totalInterruptCounter);
+    Serial.printf(" Touch: %d, WiFi is %d\n", touchRead(T3), WiFi.status());
   }  
 }
