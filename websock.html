@@ -5,12 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
         <link href="blazer.css" rel="stylesheet" type="text/css" />
         <!-- <script src="config.js"></script>  -->
-        <script src="blazer.js"></script>
-        <title>Blazer Phaser</title>
+        <script src="blazer2.js"></script>
+        <title>Blazer Socks Phaser</title>
     </head>
     <body onload="pageLoaded()">
         <h1>Beispiel 1</h1>
-        <h3>Einzelne Gruppen schalten</h3>
+        <h3>Einzelne LEDs schalten</h3>
         <center>
             <table id="staticTable">
             </table>
@@ -18,50 +18,21 @@
     </body>
     <script>
      /*
-      * TODO: gateway should be an array
-      *       open all sockets
-      *       listen on all on* and differentiate origins
-      */
+      * TODO: Source this some how in a convenient way.
+      * Currently, this is painstaking.
+     */
      let gateways = [
-         'ws://192.168.178.55/ws',      // Hardware
-         'ws://192.168.178.13:8080/',   // emu
-         'ws://192.168.178.13:8081/',   // emu
+         'ws://192.168.178.55/ws',        // Hardware
+         'ws://tux.home:8080/',           // emu
+         'ws://tux.home:8081/',           // emu
          //'ws://192.168.178.13:8082/',   // emu
      ];
-     let map  = []
-     let dict = [];
-     let gateway = 'ws://192.168.178.55/ws';
-     let state = [0, 0, 0]
-     let btn   = [];
-
-     function initWebSocket(gw){
-         console.log('Trying to open '+gw);
-         websocket = new WebSocket(gw);
-         websocket.onopen    = onOpen;
-         websocket.onclose   = onClose;
-         websocket.onmessage = onMessage;
-         console.log(websocket);
-         return websocket;
-     }
-     function onOpen(event){
-         console.log((new Date(Date.now())).toISOString()+': Connection open');
-         // Request update
-         event.target.send('STATE');
-     }
-     function onClose(event){
-         console.log((new Date(Date.now())).toISOString()+': Connection close');
-         console.log(event);
-         //console.log(event.explicitOriginalTarget.url);
-         console.log(event.target.url);
-         setTimeout(initWebSocket, 2000, event.explicitOriginalTarget.url);
-     }
+     // Dict describing all connections
      function onMessage(event){
          console.log('Got event');
-         //console.log(event.target.url);
-         let src = event.target.url;
-         //console.log('Message from '+src);
-         //console.log(map[src]);
-         b = dict[ map[src] ];
+         console.log(event.target.myId);
+         b = dict[ event.target.myId ];
+         // TODO: Check if b is undefined, then try src+'/';
          //console.log(b);
          payload = event.data;
          if (payload.startsWith("STATE")){
@@ -78,14 +49,6 @@
              console.log("We got the touch");
          }
      }
-     function onError(event){
-         console.log('Error:');
-         console.log(event);
-     }
-     function doState(){
-         websocket.send("STATE");
-     }
-
      function dynamic(a,b){
          console.log("dynamic: "+ a + ", "+b);
          console.log(dict[a]);
@@ -103,12 +66,11 @@
          // Make table
          table = document.getElementById('staticTable');
          gateways.forEach(function(item, itemIdx){
-             map[item] = itemIdx;
              let btn = [];
              // raw at the end
              let row = table.insertRow(-1);
              let cell = row.insertCell(0);
-             cell.innerHTML = 'Blaze '+itemIdx;
+             cell.innerHTML = 'Blaze '+itemIdx+'<br>'+item;
 
              cellr = row.insertCell(-1);
              cellr.setAttribute("id", 'D'+itemIdx+'0');
@@ -130,13 +92,13 @@
 
              btn = [ cellr, cellg, cellb ];
              let webs = initWebSocket(item);
+             webs.myId = itemIdx;
              dict.push({
                  btn: btn,
                  state: [0,0,0],
                  url: item,
                  webs: webs
              });
-             //webs.send("STATE");
          });
          console.log((new Date(Date.now())).toISOString()+': Loaded');
      }
