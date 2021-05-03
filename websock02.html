@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <!-- <script src="config.js"></script>  -->
+        <script src="blazer2.js"></script>
+        <title>Blazer Socks Jumps</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Beispiel 2</h1>
+        <h3>Random Play</h3>
+        <center>
+            <table id="settings">
+                <tr><td colspan="2">Startverzögerung</td></tr>
+                <tr>
+                    <td>Delay </td><td><input type="number" size="5" id="sDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="sJitter" value="500" /></td>
+                </tr>
+                <tr><td colspan="2">Einzelschritte</td></tr>
+                <tr>
+                    <td>Delay </td><td><input type="number" size="5" id="pDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="pJitter" value="500" /></td>
+                </tr>
+                <tr>
+                    <td>On time</td><td><input type="number" size="5" id="tOn" value="800" /></td>
+                </tr>
+            </table>
+        </center>
+        <center>
+            <button id="Start" onclick="btnStartClick(this)">Start</button>
+
+            <table id="staticTable">
+            </table>
+        </center>
+    </body>
+    <script>
+     let gateways = [
+         'ws://192.168.178.55/ws',        // Hardware
+         'ws://tux.home:8080/',           // emu
+         'ws://tux.home:8081/',           // emu
+         //'ws://192.168.178.13:8082/',   // emu
+     ];
+     LEDs   = [];
+     function onMessage(event){
+         console.log('Got event');
+         b = dict[ event.target.myId ];
+         payload = event.data;
+         if (payload.startsWith("STATE")){
+             console.log("State responded");
+             b.state[0] = parseInt(payload[5],10);
+             b.state[1] = parseInt(payload[6],10);
+             b.state[2] = parseInt(payload[7],10);
+             b.btn[0].setAttribute('class', 'button '+classes[0][b.state[0]]);
+             b.btn[1].setAttribute('class', 'button '+classes[1][b.state[1]]);
+             b.btn[2].setAttribute('class', 'button '+classes[2][b.state[2]]);
+             //console.log(b.state);
+         }
+         else if(payload.startsWith("TOUCH")){
+             console.log("We got the touch");
+         }
+     }
+     async function btnStartClick(btn){
+         if( btn.innerHTML === 'Running')
+             return;
+         shuffle(LEDs);
+         let sDelay  = document.getElementById('sDelay').value * 1;
+         let sJitter = document.getElementById('sJitter').value* 1;
+         let pDelay  = document.getElementById('pDelay').value * 1;
+         let pJitter = document.getElementById('pJitter').value* 1;
+         btn.innerHTML='Running';
+
+         await Sleep(pDelay+Math.floor(Math.random()*pJitter));
+         for(i=0; i<LEDs.length; i++){
+             r = ~~(LEDs[i]/3);
+             c = LEDs[i] - 3*r;
+             let obj = dict[r];
+             obj.webs.send('set'+c);
+             await Sleep(250);
+             obj.webs.send('clr'+c);
+             if(i<LEDs.length-1)
+                 await Sleep(sDelay+Math.floor(Math.random()*sJitter));
+         }
+         btn.innerHTML='Start';
+     }
+     function btnLEDClick(r, c){
+         // Nothing here
+     }
+     function pageLoaded(){
+         createLEDTable('staticTable', gateways);
+         /* List of LEDs to blink */
+         for(i=0; i<dict.length*3;i++){
+             LEDs[i] = i;
+         }
+     }
+    </script>
+</html>
