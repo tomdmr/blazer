@@ -23,7 +23,42 @@ Dann soll das Teil rote, grüne und blaue LEDs treiben. Dazu brauchen
 wir je Farbe einen Treibertransistor, einen Basisvorwiderstand und
 einen R zur Strombegrenzung der LEDs.Ich wollte eh mal wider mit KiCAD
 spielen, also habe ich da eine kleine Platine designed, die der
-Platinenbelichter recht preiswert ätzt. Lochraster mag ich nicht. 
+Platinenbelichter recht preiswert ätzt. Lochraster mag ich nicht.
+
+Als Gehäuse habe ich mir ein formschönes HT-Rohr mit zwei Deckeln
+ausgesucht. Technisch heisst das "Doppelmuffe" und die Deckel
+firmieren unter "Muffenstopfen". Es gibt sie in verschiedenen
+Nennweiten, DN32, DN40, DN50 und DN70. Die Zylinderhöhe ist immer so
+etwa 90-110mm. Was man tatsächlich einsetzt bleibt jedem selbst
+überlassen. DN32 könnte knap sein, ich habe mich für DN50 entschieden. 
+
+Auf den einen Stopfen kommt eine runde Holzscheibe, die als Träger für
+die LEDs dienen. Im Kreis werden 5mm Löcher für je 3 rote, grüne, und
+blaue LEDs gebohrt. In die Mitte kommt ein weiteres Loch. Rund um das
+zentrale Loch wird Alufolie geklebt, und von oben wird eine Schraube
+mit einer Unterlegscheibe durch das Loch geführt, mit einer weiteren
+Unterlegscheibe gehalten und mit einer Mutter fixiert.Zwischen der
+unteren Scheibe und der Mutter wird ein Kabel fixiert. Dies wird auf
+der Außenseite die Sensorfläche.  Die Löcher gehen durch den
+Muffenstopfen, nud die Holzscheibe wird mit Pattex aufgeklebt. Die
+LEDs werden mit Heißkleber in den Löchern fxiert. Sie sollten ein
+bischen mit der Kuppel herausschauen, damit sie aus einem größeren
+Winkel zu sehen sind. Die Kathoden werden alle mit V+ verbunden. Die
+Anoden der jeweiligen Farben gehen auch zusammen und dann zur
+Treiberplatine.
+
+Im unteren Teil des Zylinders werden zwei Öffnungen vorgesehen, ein
+rundes für die Ladebuchse und ein rechteckiges für den Powerschalter
+für den MCU.
+
+Im inneren werkelt als zentrales Element ein ESP32-NodeMCU. Versorgt
+wird er von einem Akku und einer einer Ladereglerplatine. Aus den
+Infos im Internet war nicht ganz klar, wie Laden und Betrieb
+zusammenpassen, deswegen ist in der V+ Leitung zum Board der Schalter
+eingebaut.
+
+Pin 15 geht auf die Sensorfläche für die Berührungsrkennung. Pins 17,
+18 und 19 gehen als Ausgänge auf die Treiberplatine. 
 
 Die weiche Ware
 ---------------
