@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <!-- <script src="config.js"></script>  -->
+        <script src="blazer2.js"></script>
+        <title>Blazer Socks Phaser</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Ping-Pong Test</h1>
+        <h3>Es werden alle Hosts im 0/24 Netzwerk angepingt. Die antwortenden kommen in die Liste</h3>
+        <center>
+            <span id="count"></span>
+            <br><br>
+            <span id="resList"></span>
+            <table id="staticTable">
+                <head>
+                    <tr>
+                        <th>Index</th>
+                        <th>Adresse</th>
+                        <th>Test</th>
+                        <th>Gültig</th>
+                    </tr>
+                </head>
+            </table>
+        </center>
+    </body>
+
+    <script>
+     let active = 0;
+     let list   = [];
+     function ping(host, port, pong) {
+         active++;
+         var started = new Date().getTime();
+
+         var http = new XMLHttpRequest();
+
+         http.open("GET", "http://" + host + ":" + port, /*async*/true);
+         http.timeout = 5000;
+         http.onreadystatechange = function() {
+             if (http.readyState == 4) {
+                 var ended = new Date().getTime();
+
+                 var milliseconds = ended - started;
+                 active--;
+
+                 if (pong != null) {
+                     pong(host, milliseconds);
+                 }
+             }
+         };
+         try {
+             http.send(null);
+         } catch(exception) {
+             // this is expected
+         }
+     }
+     function doPong(host, pong){
+         console.log('Response from '+host+': '+pong+ 'ms');
+         document.getElementById('count').innerHTML = active;
+         if (Number(pong) < 1800){
+             list.push(host);
+         }
+         if (active == 0){
+             //document.getElementById('resList').innerHTML = list;
+             //makeTable();
+         }
+     }
+     function makeTable(){
+         table = document.getElementById('staticTable');
+         list.sort((a, b) => {
+             const num1 = Number(a.split(".").map((num) =>
+                 (`000${num}`).slice(-3) ).join(""));
+             const num2 = Number(b.split(".").map((num) =>
+                 (`000${num}`).slice(-3) ).join(""));
+             return num1-num2;
+         });
+         list.forEach(function(item, itemIdx){
+             let row = table.insertRow(-1);
+             let cell = row.insertCell(-1);
+             cell.innerHTML = itemIdx;
+             cell = row.insertCell(-1);
+             let input = document.createElement("input");
+             input.type = "text";
+             input.value = 'ws://'+item+'/ws';
+             cell.appendChild(input);
+
+             cell = row.insertCell(-1);
+             let btn = document.createElement("input");
+             btn.type = "button";
+             btn.value = "Test";
+             btn.setAttribute("onclick", "testWS("+itemIdx+")");
+             cell.appendChild(btn);
+
+             cell = row.insertCell(-1);
+             cell.innerHTML = '?';
+         });
+     }
+     function testWS(idx){
+         // Grab the row
+         let row = document.getElementById('staticTable').rows[idx*1+1];
+         console.log(row);
+         let input = row.getElementsByTagName('input');
+         console.log(input[0].value);
+         ws = initWebSocket(input[0].value);
+         ws.onclose = myOnClose;
+         ws.myId = row;
+     }
+     function myOnClose(event){
+         console.log('Fucked up');
+         row = event.target.myId;
+         row.cells[3].innerHTML = 'Nope';
+     }
+     function onMessage(event){
+         console.log('Got event, looks good');
+         row = event.target.myId;
+         row.cells[3].innerHTML = 'Yup';
+     }
+     function makeCookie(){
+         // iterate over table and collect Yup
+     }
+     /*
+      *  For reasons I cannot fanthom, 192 is the limit.
+      *  So we do four legs of 64 hosts.
+      */
+     async function pageLoaded(){
+         for(i=1; i<64; i++){
+             ping('192.168.178.'+i, 80, doPong);
+         }
+         while (active > 0){
+             await Sleep(1000);
+         }
+         for(i=64; i<128; i++){
+             ping('192.168.178.'+i, 80, doPong);
+         }
+         while (active > 0){
+             await Sleep(1000);
+         }
+         for(i=128; i< 192; i++){
+             ping('192.168.178.'+i, 80, doPong);
+         }
+         while (active > 0){
+             await Sleep(1000);
+         }
+         for(i=192; i< 255; i++){
+             ping('192.168.178.'+i, 80, doPong);
+         }
+         while (active > 0){
+             await Sleep(1000);
+         }
+         makeTable();
+     }
+    </script>
+</html>
