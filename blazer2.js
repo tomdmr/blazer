@@ -8,11 +8,11 @@ let classes = [
  * world's best solution, as many people, including me, usually drop all
  * cookies when they quit the browser. With mobile devices in mind, I do not quit
  * the browsers too often. But yes, cookies are not the final word
-*/
+ */
 /*
  * returns the cookie with the given name,
  * or undefined if not found
-*/
+ */
 function getCookie(name) {
     let matches = document.cookie.match(new RegExp(
         "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
@@ -22,7 +22,7 @@ function getCookie(name) {
 /*
  * remove all cookies associated to local storage.
  *
-*/
+ */
 function removeCookies() {
     let res = document.cookie;
     if( res === "") return;
@@ -58,9 +58,44 @@ function onError(event){
     console.log('Error:');
     console.log(event);
 }
+
+function onMessage(event){
+    //console.log('Got event');
+    //console.log(event);
+    //console.log(event.target.myId);
+    let b = dict[ event.target.myId ];
+    //console.log(b);
+    let payload = event.data;
+    //console.log(payload);
+    if (payload.startsWith("STATE")){
+        console.log("State responded");
+        b.state[0] = parseInt(payload[5],10);
+        b.state[1] = parseInt(payload[6],10);
+        b.state[2] = parseInt(payload[7],10);
+        b.btn[0].setAttribute('class', 'button '+classes[0][b.state[0]]);
+        b.btn[1].setAttribute('class', 'button '+classes[1][b.state[1]]);
+        b.btn[2].setAttribute('class', 'button '+classes[2][b.state[2]]);
+        //console.log(b.state);
+    }
+    else if(payload.startsWith("TOUCH")){
+        console.log("We got the touch");
+        /* 4th button is currently missing
+        if(b.btn[3].innerHTML === 'Touch' ){
+            b.btn[3].innerHTML = 'Yeah!';
+            setTimeout(function reset(){b.btn[3].innerHTML = 'Touch';}, 100);
+        }
+        */ 
+    }
+    else if(payload.startsWith("CLOSE")){
+        console.log("Device goes to sleep");
+        event.target.close();
+    }
+}
+
 function doState(){
     websocket.send("STATE");
 }
+
 
 function createLEDTable(tableId, gateways){
     // Make table
