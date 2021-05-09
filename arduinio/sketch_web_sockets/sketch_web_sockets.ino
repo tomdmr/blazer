@@ -23,7 +23,7 @@ const int ledPins[3] = {19, 18, 17};
 // Touch is on GPIO15, TOUCH3
 bool touchDetected = false;
 unsigned long msLastEvent;    // millis() of the last event
-
+unsigned long msAPActivity;
 #ifdef WITH_WATCHDOG
 // Timer section
 volatile int interruptCounter;
@@ -133,12 +133,6 @@ String processor(const String& var){
   return "Oops";
 }
 
-void onRequest(AsyncWebServerRequest *request){
-  //Handle Unknown Request
-  Serial.println("Request for host "+request->host()+", path "+request->url() );
-  //request->send(404);
-  request->redirect("/");
-}
 void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
@@ -174,16 +168,13 @@ void setup(){
   // Web-Server/Sockets
   initWebSocket();
   // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html, processor);
-  });
-  server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(204, "", "");
-  });
   server.onNotFound(onRequest);
+  server.on("/",     HTTP_ANY, onRoot);
+  server.on("/scan", HTTP_ANY, onScan);
+  server.on("/generate_204", HTTP_ANY, on204);
   // Start server
   server.begin();
-  msLastEvent = millis();
+  msAPActivity = msLastEvent = millis();
 }
 
 void gotTouch(){
