@@ -60,6 +60,9 @@
          else if(payload.startsWith("TOUCH")){
              console.log("We got the touch");
          }
+         else if(payload.startsWith("SLEEP")){
+             console.log("Device goes to sleep");
+         }
      }
      async function btnStartClick(btn){
          if( btn.innerHTML === 'Running')
@@ -69,6 +72,7 @@
          let sJitter = document.getElementById('sJitter').value* 1;
          let pDelay  = document.getElementById('pDelay').value * 1;
          let pJitter = document.getElementById('pJitter').value* 1;
+         let onTime  = document.getElementById('tOn').value* 1;
          btn.innerHTML='Running';
 
          await Sleep(pDelay+Math.floor(Math.random()*pJitter));
@@ -77,7 +81,7 @@
              c = LEDs[i] - 3*r;
              let obj = dict[r];
              obj.webs.send('set'+c);
-             await Sleep(250);
+             await Sleep(onTime);
              obj.webs.send('clr'+c);
              if(i<LEDs.length-1)
                  await Sleep(sDelay+Math.floor(Math.random()*sJitter));
