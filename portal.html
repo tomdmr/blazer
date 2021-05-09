@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="blazer.js"></script>
+        <title>Blazer Phaser Main Portal</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Blazer Main Portal</h1>
+        <table>
+            <tr>
+                <td>Number of pods</td>
+                <td><input type="number" min="1" max="8" value="1" id="numPods" onchange="numPodsChange(this)"/></td>
+            </tr>
+            <tr>
+                <td>Name of Pods</td>
+                <td><input type="text" value="ESP" id="namePods" onchange="namePods(this)"/></td>
+            </tr>
+        </table>
+        <table id="BlazerTable">
+            <tr><td>ESP01</td><td><input type="checkbox" name="Blazers" /></td><td>Check</td></tr>
+            <tr><td>ESP02</td><td><input type="checkbox" name="Blazers" /></td><td>Check</td></tr>
+            <tr><td>ESP03</td><td><input type="checkbox" name="Blazers" /></td><td>Check</td></tr>
+            <tr><td>192.168.178.21</td><td><input type="checkbox" name="Blazers" /></td><td>Check</td></tr>
+        </table>
+        <table>
+            <tr>
+                <td class="button btn_g-off" onclick="launch('demo01.html')">Demo 1</td>
+                <td class="button btn_g-off" onclick="launch('demo02.html')">Demo 2</td>
+                <td class="button btn_r-off" onclick="">Demo 3</td>
+                <td class="button btn_r-off" onclick="">Demo 4</td>
+            </tr>
+            <tr>
+                <td class="button btn_r-off" onclick="">Demo 5</td>
+                <td class="button btn_r-off" onclick="">Demo 6</td>
+                <td class="button btn_r-off" onclick="">Demo 7</td>
+                <td class="button btn_r-off" onclick="">Demo 8</td>
+            </tr>
+        </table>
+    </body>
+    <script>
+     function numPodsChange(control){
+         // Delete row n-1 to 1
+         // Create new rows
+     }
+     function launch(url){
+         console.log(url);
+         let table = document.getElementById("BlazerTable");
+         let param="";
+         for (let i = 0, row; row = table.rows[i]; i++) {
+             let n = row.cells[0].innerHTML;
+             let cb = row.cells[1].getElementsByTagName('input')[0];
+             if(cb.checked){
+                 if( param === "") param += '?';
+                 else      param += '&';
+                 param += 'x='+ n;
+             }
+         }
+         console.log(url+param);
+         window.open(url+param, "_top");
+     }
+     function pageLoaded(){
+     }
+    </script>
+</html>

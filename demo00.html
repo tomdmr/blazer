@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="blazer2.js"></script>
+        <title>Some Demo</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Demo 01 Click &amp; Toggle</h1>
+        <center>
+            <table id="staticTable">
+            </table>
+        </center>
+    </body>
+    <script>
+     let gateways = [];
+     /**
+      * Candidate for refactor
+      */
+     function onMessage(event){
+         //console.log('Got event');
+         //console.log(event);
+         //console.log(event.target.myId);
+         let b = dict[ event.target.myId ];
+         //console.log(b);
+         let payload = event.data;
+         //console.log(payload);
+         if (payload.startsWith("STATE")){
+             console.log("State responded");
+             b.state[0] = parseInt(payload[5],10);
+             b.state[1] = parseInt(payload[6],10);
+             b.state[2] = parseInt(payload[7],10);
+             b.btn[0].setAttribute('class', 'button '+classes[0][b.state[0]]);
+             b.btn[1].setAttribute('class', 'button '+classes[1][b.state[1]]);
+             b.btn[2].setAttribute('class', 'button '+classes[2][b.state[2]]);
+             //console.log(b.state);
+         }
+         else if(payload.startsWith("TOUCH")){
+             console.log("We got the touch");
+         }
+     }
+     function dynamic(a,b){
+         console.log("dynamic: "+ a + ", "+b);
+         let obj = dict[a];
+         if (obj.state[b] == 0){
+             obj.webs.send('set'+b);
+         }
+         else{
+             obj.webs.send('clr'+b);
+         }
+     }
+
+     function pageLoaded(){
+         const queryString = window.location.search;
+         const urlParams = new URLSearchParams(queryString);
+         //console.log(queryString);
+         //console.log(urlParams);
+
+         table = document.getElementById('staticTable');
+         let i = 0;
+         urlParams.forEach(function(item){
+             let btn = [];
+             // raw at the end
+             let row = table.insertRow(-1);
+             let cell = row.insertCell(0);
+             cell.innerHTML = item;
+             cellr = row.insertCell(-1);
+             cellr.setAttribute("id", 'D'+i+'0');
+             cellr.setAttribute("class", "button btn_r-off");
+             cellr.setAttribute("onclick", "dynamic("+i+",0)");
+             cellr.innerHTML = 'foo';
+             
+             cellg = row.insertCell(-1);
+             cellg.setAttribute("id", 'D'+i+'1');
+             cellg.setAttribute("class", "button btn_g-off");
+             cellg.setAttribute("onclick", "dynamic("+i+",1)");
+             cellg.innerHTML = 'foo';
+
+             cellb = row.insertCell(-1);
+             cellb.setAttribute("id", 'D'+i+'2');
+             cellb.setAttribute("class", "button btn_b-off");
+             cellb.setAttribute("onclick", "dynamic("+i+",2)");
+             cellb.innerHTML = 'foo';
+
+             gateways.push('ws://'+item+'/ws');
+
+             btn = [ cellr, cellg, cellb ];
+             console.log("Start WS");
+             let webs = initWebSocket('ws://'+item+'/ws');
+             console.log(i);
+             webs.myId = i;
+             i += 1;
+             dict.push({
+                 btn: btn,
+                 state: [0,0,0],
+                 url: item,
+                 webs: webs
+             });
+
+         });
+         console.log(dict);
+     }
+    </script>
+</html>

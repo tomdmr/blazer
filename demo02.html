@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="blazer2.js"></script>
+        <title>Some Demo</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Demo 02 Running all</h1>
+        <center>
+            <table id="settings">
+                <tr><td colspan="2">Startverzögerung</td></tr>
+                <tr>
+                    <td>Delay </td><td><input type="number" size="5" id="sDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="sJitter" value="500" /></td>
+                </tr>
+                <tr><td colspan="2">Einzelschritte</td></tr>
+                <tr>
+                    <td>Delay </td><td><input type="number" size="5" id="pDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="pJitter" value="500" /></td>
+                </tr>
+                <tr>
+                    <td>On time</td><td><input type="number" size="5" id="tOn" value="800" /></td>
+                </tr>
+            </table>
+            <button id="Start" onclick="btnStartClick(this)">Start</button>
+            <table id="staticTable">
+            </table>
+        </center>
+    </body>
+    <script>
+     LEDs   = [];
+     async function btnStartClick(btn){
+         if( btn.innerHTML === 'Running')
+             return;
+         shuffle(LEDs);
+         let sDelay  = document.getElementById('sDelay').value * 1;
+         let sJitter = document.getElementById('sJitter').value* 1;
+         let pDelay  = document.getElementById('pDelay').value * 1;
+         let pJitter = document.getElementById('pJitter').value* 1;
+         let onTime  = document.getElementById('tOn').value* 1;
+         btn.innerHTML='Running';
+
+         await Sleep(pDelay+Math.floor(Math.random()*pJitter));
+         for(i=0; i<LEDs.length; i++){
+             r = ~~(LEDs[i]/3);
+             c = LEDs[i] - 3*r;
+             let obj = dict[r];
+             obj.webs.send('set'+c);
+             await Sleep(onTime);
+             obj.webs.send('clr'+c);
+             if(i<LEDs.length-1)
+                 await Sleep(sDelay+Math.floor(Math.random()*sJitter));
+         }
+         btn.innerHTML='Start';
+     }
+
+     function dynamic(a,b){
+         // Clickong has no effect
+         console.log("dynamic: "+ a + ", "+b);
+     }
+
+     function pageLoaded(){
+         const queryString = window.location.search;
+         const urlParams = new URLSearchParams(queryString);
+         //console.log(queryString);
+         //console.log(urlParams);
+
+         table = document.getElementById('staticTable');
+         let i = 0;
+         urlParams.forEach(function(item){
+             let btn = [];
+             // raw at the end
+             let row = table.insertRow(-1);
+             let cell = row.insertCell(0);
+             cell.innerHTML = item;
+             cellr = row.insertCell(-1);
+             cellr.setAttribute("id", 'D'+i+'0');
+             cellr.setAttribute("class", "button btn_r-off");
+             cellr.setAttribute("onclick", "dynamic("+i+",0)");
+             cellr.innerHTML = 'foo';
+
+             cellg = row.insertCell(-1);
+             cellg.setAttribute("id", 'D'+i+'1');
+             cellg.setAttribute("class", "button btn_g-off");
+             cellg.setAttribute("onclick", "dynamic("+i+",1)");
+             cellg.innerHTML = 'foo';
+
+             cellb = row.insertCell(-1);
+             cellb.setAttribute("id", 'D'+i+'2');
+             cellb.setAttribute("class", "button btn_b-off");
+             cellb.setAttribute("onclick", "dynamic("+i+",2)");
+             cellb.innerHTML = 'foo';
+
+
+             btn = [ cellr, cellg, cellb ];
+             console.log("Start WS");
+             let webs = initWebSocket('ws://'+item+'/ws');
+             console.log(i);
+             webs.myId = i;
+             i += 1;
+             dict.push({
+                 btn: btn,
+                 state: [0,0,0],
+                 url: item,
+                 webs: webs
+             });
+         });
+         /* List of LEDs to blink */
+         for(i=0; i<dict.length*3;i++){
+             LEDs[i] = i;
+         }
+         console.log(dict);
+         console.log(LEDs);
+     }
+    </script>
+</html>
