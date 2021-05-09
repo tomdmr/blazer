@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
+    <!-- See eof for comments -->
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
         <link href="blazer.css" rel="stylesheet" type="text/css" />
-        <!-- <script src="config.js"></script>  -->
         <script src="blazer2.js"></script>
         <title>Blazer Socks Phaser</title>
     </head>
@@ -20,7 +20,7 @@
      /*
       * TODO: Source this some how in a convenient way.
       * Currently, this is painstaking.
-     */
+      */
      let gateways = [
          'ws://192.168.178.55/ws',        // Hardware
          'ws://tux.home:8080/',           // emu
@@ -46,7 +46,15 @@
              //console.log(b.state);
          }
          else if(payload.startsWith("TOUCH")){
-             console.log("We got the touch");
+             //console.log("We got the touch");
+             if(b.btn[3].innerHTML === 'Touch' ){
+                 b.btn[3].innerHTML = 'Yeah!';
+                 setTimeout(function reset(){b.btn[3].innerHTML = 'Touch';}, 100);
+             }
+         }
+         else if(payload.startsWith("CLOSE")){
+             console.log("Device goes to sleep");
+             event.target.close();
          }
      }
      function dynamic(a,b){
@@ -90,7 +98,10 @@
              cellb.setAttribute("onclick", "dynamic("+itemIdx+",2)");
              cellb.innerHTML = 'foo';
 
-             btn = [ cellr, cellg, cellb ];
+             cell = row.insertCell(-1);
+             cell.innerHTML = "Touch";
+
+             btn = [ cellr, cellg, cellb, cell ];
              let webs = initWebSocket(item);
              webs.myId = itemIdx;
              dict.push({
@@ -104,3 +115,4 @@
      }
     </script>
 </html>
+<!--  -->
