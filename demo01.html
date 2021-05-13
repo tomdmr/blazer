@@ -3,7 +3,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <link href="blazer.css" rel="stylesheet" type="text/css"/>
         <script src="blazer2.js"></script>
         <title>Some Demo</title>
     </head>
@@ -25,54 +25,12 @@
              obj.webs.send('clr'+b);
          }
      }
-
      function pageLoaded(){
          const queryString = window.location.search;
          const urlParams = new URLSearchParams(queryString);
          //console.log(queryString);
          //console.log(urlParams);
-
-         table = document.getElementById('staticTable');
-         let i = 0;
-         urlParams.forEach(function(item){
-             let btn = [];
-             // raw at the end
-             let row = table.insertRow(-1);
-             let cell = row.insertCell(0);
-             cell.innerHTML = item;
-             cellr = row.insertCell(-1);
-             cellr.setAttribute("id", 'D'+i+'0');
-             cellr.setAttribute("class", "button btn_r-off");
-             cellr.setAttribute("onclick", "dynamic("+i+",0)");
-             cellr.innerHTML = 'foo';
-             
-             cellg = row.insertCell(-1);
-             cellg.setAttribute("id", 'D'+i+'1');
-             cellg.setAttribute("class", "button btn_g-off");
-             cellg.setAttribute("onclick", "dynamic("+i+",1)");
-             cellg.innerHTML = 'foo';
-
-             cellb = row.insertCell(-1);
-             cellb.setAttribute("id", 'D'+i+'2');
-             cellb.setAttribute("class", "button btn_b-off");
-             cellb.setAttribute("onclick", "dynamic("+i+",2)");
-             cellb.innerHTML = 'foo';
-
-
-             btn = [ cellr, cellg, cellb ];
-             console.log("Start WS");
-             let webs = initWebSocket('ws://'+item+'/ws');
-             console.log(i);
-             webs.myId = i;
-             i += 1;
-             dict.push({
-                 btn: btn,
-                 state: [0,0,0],
-                 url: item,
-                 webs: webs
-             });
-
-         });
+         createLEDTable('staticTable', urlParams);
          console.log(dict);
      }
     </script>
