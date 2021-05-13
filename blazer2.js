@@ -8,14 +8,13 @@ let classes = [
  * world's best solution, as many people, including me, usually drop all
  * cookies when they quit the browser. With mobile devices in mind, I do not quit
  * the browsers too often. But yes, cookies are not the final word
- */
-/*
+ *
  * returns the cookie with the given name,
  * or undefined if not found
  */
 function getCookie(name) {
     let matches = document.cookie.match(new RegExp(
-        "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+        '(?:^|; )' + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'
     ));
     return matches ? decodeURIComponent(matches[1]) : undefined;
 }
@@ -25,23 +24,22 @@ function getCookie(name) {
  */
 function removeCookies() {
     let res = document.cookie;
-    if( res === "") return;
-    let multiple = res.split(";");
+    if( res === '') return;
+    let multiple = res.split(';');
     for(let i = 0; i < multiple.length; i++) {
-        let key = multiple[i].split("=");
-        document.cookie = key[0]+" =; expires = Thu, 01 Jan 1970 00:00:00 UTC";
+        let key = multiple[i].split('=');
+        document.cookie = key[0]+' =; expires = Thu, 01 Jan 1970 00:00:00 UTC';
     }
 }
-
 /* boiler plate */
 let dict = [];
 function initWebSocket(gw){
-    console.log('Trying to open '+gw);
+    //console.log('Trying to open '+gw);
     websocket = new WebSocket(gw);
     websocket.onopen    = onOpen;
     websocket.onclose   = onClose;
     websocket.onmessage = onMessage;
-    console.log(websocket);
+    //console.log(websocket);
     return websocket;
 }
 function onOpen(event){
@@ -67,67 +65,67 @@ function onMessage(event){
     //console.log(b);
     let payload = event.data;
     //console.log(payload);
-    if (payload.startsWith("STATE")){
-        console.log("State responded");
-        b.state[0] = parseInt(payload[5],10);
-        b.state[1] = parseInt(payload[6],10);
-        b.state[2] = parseInt(payload[7],10);
-        b.btn[0].setAttribute('class', 'button '+classes[0][b.state[0]]);
-        b.btn[1].setAttribute('class', 'button '+classes[1][b.state[1]]);
-        b.btn[2].setAttribute('class', 'button '+classes[2][b.state[2]]);
+    if (payload.startsWith('STATE')){
+        //console.log('State responded');
+        for(let i=0; i<3; i++){
+            b.state[i] = parseInt(payload[i+5],10);
+            b.btn[i].setAttribute('class', 'button '+classes[i][b.state[i]]);
+        }
         //console.log(b.state);
     }
-    else if(payload.startsWith("TOUCH")){
-        console.log("We got the touch");
+    else if(payload.startsWith('TOUCH')){
+        console.log('We got the touch');
         /* 4th button is currently missing
-        if(b.btn[3].innerHTML === 'Touch' ){
-            b.btn[3].innerHTML = 'Yeah!';
-            setTimeout(function reset(){b.btn[3].innerHTML = 'Touch';}, 100);
-        }
-        */ 
+           if(b.btn[3].innerHTML === 'Touch' ){
+           b.btn[3].innerHTML = 'Yeah!';
+           setTimeout(function reset(){b.btn[3].innerHTML = 'Touch';}, 100);
+           }
+         */
     }
-    else if(payload.startsWith("CLOSE")){
-        console.log("Device goes to sleep");
+    else if(payload.startsWith('CLOSE')){
+        console.log('Device goes to sleep');
         event.target.close();
     }
 }
 
 function doState(){
-    websocket.send("STATE");
+    websocket.send('STATE');
 }
 
-
-function createLEDTable(tableId, gateways){
-    // Make table
+function createLEDTable(tableId, urlParams){
     table = document.getElementById(tableId);
-    gateways.forEach(function(item, itemIdx){
+    let i = 0;
+    urlParams.forEach(function(item){
         let btn = [];
-        // raw at the end
+        // row at the end
         let row = table.insertRow(-1);
         let cell = row.insertCell(0);
-        cell.innerHTML = 'Blaze '+itemIdx+'<br>'+item;
-
+        cell.innerHTML = item;
         cellr = row.insertCell(-1);
-        cellr.setAttribute("id", 'D'+itemIdx+'0');
-        cellr.setAttribute("class", "button btn_r-off");
-        cellr.setAttribute("onclick", "btnLEDClick("+itemIdx+",0)");
-        cellr.innerHTML = '';
+        cellr.setAttribute('id', 'D'+i+'0');
+        cellr.setAttribute('class', 'button btn_r-off');
+        cellr.setAttribute('onclick', 'dynamic('+i+',0)');
+        cellr.innerHTML = '&nbsp;';
 
         cellg = row.insertCell(-1);
-        cellg.setAttribute("id", 'D'+itemIdx+'1');
-        cellg.setAttribute("class", "button btn_g-off");
-        cellg.setAttribute("onclick", "btnLEDClick("+itemIdx+",1)");
-        cellg.innerHTML = '';
+        cellg.setAttribute('id', 'D'+i+'1');
+        cellg.setAttribute('class', 'button btn_g-off');
+        cellg.setAttribute('onclick', 'dynamic('+i+',1)');
+        cellg.innerHTML = '&nbsp;';
 
         cellb = row.insertCell(-1);
-        cellb.setAttribute("id", 'D'+itemIdx+'2');
-        cellb.setAttribute("class", "button btn_b-off");
-        cellb.setAttribute("onclick", "btnLEDClick("+itemIdx+",2)");
-        cellb.innerHTML = '';
+        cellb.setAttribute('id', 'D'+i+'2');
+        cellb.setAttribute('class', 'button btn_b-off');
+        cellb.setAttribute('onclick', 'dynamic('+i+',2)');
+        cellb.innerHTML = '&nbsp;';
+
 
         btn = [ cellr, cellg, cellb ];
-        let webs = initWebSocket(item);
-        webs.myId = itemIdx;
+        console.log('Start WS');
+        let webs = initWebSocket('ws://'+item+'/ws');
+        console.log(i);
+        webs.myId = i;
+        i += 1;
         dict.push({
             btn: btn,
             state: [0,0,0],
@@ -150,4 +148,3 @@ function shuffle(array) {
 function Sleep(milliseconds) {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
-/* To here */
