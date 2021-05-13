@@ -2,3 +2,5 @@
 *~
 .#*
 *#
+tmp/
+arduinio/sketch_web_sockets/http_gz.h
