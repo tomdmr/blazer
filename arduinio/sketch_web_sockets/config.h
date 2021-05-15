@@ -9,7 +9,7 @@
 #define TRY_WLAN          60L
 // Idle time until sleeping
 #define IDLE_TO_SLEEP     (3600  * 1000L)
-#define AP_GRACEPERIOD    (30    * 1000L)
+#define AP_GRACEPERIOD    (120   * 1000L)
 #define WATCHDOG_MSG      10LL
 
 #define TOUCH_SENS        40
@@ -32,7 +32,7 @@ char myName[32]    = "esp-default";
 #define DEBUG_MSG(...)
 #endif
 
-
+#if 0
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <head>
@@ -157,6 +157,6 @@ const char index_html[] PROGMEM = R"rawliteral(
 </body>
 </html>
 )rawliteral";
- 
+#endif
 
 #endif
