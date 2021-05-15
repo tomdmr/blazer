@@ -35,6 +35,7 @@ bool isAP   = true;
 bool tryExt = false;
 
 unsigned long msLastEvent;    // millis() of the last event
+unsigned long msLastTouch;    // millis() of the last event
 unsigned long msAPActivity;
 #ifdef WITH_WATCHDOG
 // Timer section
@@ -98,7 +99,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    Serial.printf("Got cmd %s\n", data);
+    DBG_MSG("Got cmd %s\n", data);
     int len = strlen((char*)data);
     if (strcmp((char*)data, "STATE") == 0) {
       notifyClients();
@@ -157,21 +158,6 @@ void initWebSocket() {
   server.addHandler(&ws);
 }
 /************************************************************************/
-String processor(const String& var){
-  Serial.println(var);
-  /*
-  if(var == "STATE"){
-    if (ledState){
-      return "ON";
-    }
-    else{
-      return "OFF";
-    }
-  }
-  */
-  return "Oops";
-}
-/************************************************************************/
 /************************************************************************/
 /************************************************************************/
 void setup(){
@@ -224,7 +210,7 @@ void setup(){
   // Start server
   server.begin();
   savePreferences();
-  msAPActivity = msLastEvent = millis();
+  msAPActivity = msLastTouch = msLastEvent = millis();
 }
 /************************************************************************/
 /************************************************************************/
@@ -240,10 +226,11 @@ void loop() {
   }
   if(touchDetected){
     touchDetected = false;
-    ws.textAll("TOUCH");
-    DEBUG_MSG("TOUCH: %d\n", touchRead(T3));
-    //Serial.printf("TOUCH: %d\n", touchRead(T3));
-    msLastEvent = millis();
+    if( millis() > msLastTouch + 50){
+      ws.textAll("TOUCH");
+      DEBUG_MSG("TOUCH: %d %lu\n", touchRead(T3), millis());
+    }
+    msLastTouch = msLastEvent = millis();
   }
 #ifdef WITH_WATCHDOG  
   if (interruptCounter > 0) {
@@ -257,7 +244,7 @@ void loop() {
     Serial.printf(" Touch: %d, WiFi is %d\n", touchRead(T3), WiFi.status());
   }  
 #endif
-  if( isAP && (millis() - msAPActivity > AP_GRACEPERIOD)){
+  if( isAP && (millis()  > msAPActivity + AP_GRACEPERIOD)){
     Serial.println("Shutting down AP");
     isAP = false;
     WiFi.enableAP(false);
