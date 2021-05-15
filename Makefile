@@ -30,7 +30,7 @@ $(GZ_SRC_HTM): $(SRC_HTM)
 $(DST): $(GZ_SRC_CSS) $(GZ_SRC_JS) $(GZ_SRC_HTM)
 	@echo rm $(DST)
 	@echo "#ifndef _HTTP_GZ_H_\n#define _HTTP_GZ_H_" > $(DST)
-	@for f in $(GZ_LIST_GZ); do \
+	@for f in $^; do \
 		xxd -i $$f | \
 		perl -pe 's/tmp_//;s/unsigned char/const uint8_t/;s/ =/ PROGMEM=/;s/unsigned int/const uint16_t/' >> $(DST); \
 	done
