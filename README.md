@@ -58,29 +58,48 @@ zusammenpassen, deswegen ist in der V+ Leitung zum Board der Schalter
 eingebaut.
 
 Pin 15 geht auf die Sensorfläche für die Berührungsrkennung. Pins 17,
-18 und 19 gehen als Ausgänge auf die Treiberplatine. 
+18 und 19 gehen als Ausgänge auf die Treiberplatine.
+
 
 Die weiche Ware
 ---------------
 
-Das Designziel war: Es soll überall laufen. Das beudeutet eigentlich
+Die ESPs können über Bluetooth oder WLAN angesprochen werden. BT ist
+nicht wirklich Multipoint-fähig, also war WLAN erste Wahl. Das
+Designziel war: Clients sollen auf allem laufen. Das beudeutet eigentlich
 immer: Irgendwie HTML plus JavaScript. Das hat ein paar Implikationen
-zur Sicherheit. Mein Set-up ist ein passwort gesichertes Internet, das
+zur Sicherheit. Mein Set-up ist ein Passwort gesichertes Internet, das
 keine Verbindung zur Welt hat. Also eine FritzBox in der Halle, die
 einen Access Point aufspannt. Jeder andere WLAN-AP tut es natürlich
-auch, zur Not ein Handy.
+auch zur Not ein Handy.
 
 Nächstes Ziel: Es soll ohne extra Server arbeiten, sondern nur mit
 lokalen HTML-Files. Das erfordert ein paar Tweaks, die es nicht ratsam
 erscheinen lassen, das ganze Konstrukt in einem zugänglichen Netz
 aufzuhängen.
 
-Die wichtigen Dateien hier sind `blazer.css`, `blazer.js`, sowie die
+Die erste Version basierte im Wesentlichen auf GET-Requests, die war
+mir aber zu unflexibel. Die jetzt realisierte Version basiert auf
+Web-Sockets.
+
+Die wichtigen Dateien hier sind `blazer.css`, `blazer2.js`, sowie die
 HTML-Files. In `blazer.css` ist etwas CSS für das Aussehen, aber ich
 bin Ingenieur, kann also mühelos 256 Grautöne unterscheiden, habe aber
-kein Farbempfinden...  `blazer.js` enthält eine Sammplung von
+kein Farbempfinden...  `blazer2.js` enthält eine Sammplung von
 JavaScript-Funktionen, die aus den Beispielen heraus fakturiert wurden
 und sich irgendwie als sinnvoll erwiesen haben. 
+
+### Server-Seite ###
+
+Die Programmierung erfolgte mit der Arduino-IDE. Durch die
+Entscheidung für die Websockets wurde auf die Standard-Implementation
+verzichtet. Stattdessen wurde die ESPAsyncWebServer-Implementation mit
+asynchronem TCP eingesetzt. Die Implementierung orientiert sich im
+Wesentlichen an der Referenzimplementierung. Auf der HTML-Seiite
+passiert relativ wenig. Die Websocket-Seite reagiert asynchron auf
+Anfragen von den Clients. Aus diesen Anfragen resultieren meist
+Änderungen des LED-Zustands, der dann an die Clients zurückgemeldet
+werden. Genauso wird bei Berührung eine Nachricht an die Cllients geschickt. 
 
 ### Konfiguration ###
 
