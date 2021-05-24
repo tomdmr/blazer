@@ -4,9 +4,10 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
         <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="blazer2.js"></script>
         <title>Blazer Phaser Main Portal</title>
     </head>
-    <body onload="pageLoaded()">
+    <body>
         <h1>Blazer Main Portal</h1>
         <center>
             <table>
@@ -50,7 +51,7 @@
                 <tr>
                     <td class="button btn_g-off" onclick="launch('demo01.html')">Demo 1</td>
                     <td class="button btn_g-off" onclick="launch('demo02.html')">Demo 2</td>
-                    <td class="button btn_r-off" onclick="">Demo 3</td>
+                    <td class="button btn_g-off" onclick="launch('demo03.html')">Demo 3</td>
                     <td class="button btn_r-off" onclick="">Demo 4</td>
                 </tr>
                 <tr>
@@ -61,101 +62,36 @@
                 </tr>
             </table>
         </center>
+        <script>
+         function numPodsChange(control){
+             let table = document.getElementById("BlazerTable");
+             let oldV = table.rows.length;
+             let newV = control.value*1;
+             console.log(oldV);
+             console.log(newV);
+             // Delete row n-1 to 1
+             for(i=oldV; i>newV; i--){
+                 console.log("killing "+i);
+                 table.deleteRow(oldV-1);
+             }
+             for(i=oldV; i<newV; i++){
+                 console.log("making "+i);
+                 row = table.insertRow(-1);
+                 let cell = row.insertCell(-1);
+                 let input = document.createElement("input");
+                 input.type = "checkbox";
+                 cell.appendChild(input);
+                 cell = row.insertCell(-1);
+                 input = document.createElement("input");
+                 input.type = "text";
+                 input.value = "esp0"+i;
+                 cell.appendChild(input);
+                 cell = row.insertCell(-1);
+                 cell.setAttribute('class', 'button');
+                 cell.setAttribute('onclick', 'pingpong(this)');
+                 cell.innerHTML= "Check";
+             }
+         }
+        </script>
     </body>
-    <script>
-     function launch(url){
-         console.log(url);
-         let table = document.getElementById("BlazerTable");
-         let param="";
-         let es = 0;
-         for (let i = 0, row; row = table.rows[i]; i++) {
-             let n = row.cells[1].firstChild.value;
-             let cb = row.cells[0].getElementsByTagName('input')[0];
-             if(cb.checked){
-                 if( param === "") param += '?';
-                 else      param += '&';
-                 param += es+'='+ n;
-                 es++;
-             }
-         }
-         console.log(url+param);
-         window.open(url+param, "_top");
-     }
-     function ping(host, port, pong, id) {
-         var started = new Date().getTime();
-
-         var http = new XMLHttpRequest();
-
-         http.open("GET", "http://" + host + ":" + port, /*async*/true);
-         http.timeout = 5000;
-         http.error = function(event){
-             console.log(event);
-         };
-         http.onreadystatechange = function() {
-             if (http.readyState == 4) {
-                 var ended = new Date().getTime();
-                 var milliseconds = ended - started;
-                 if (pong != null) {
-                     pong(host, milliseconds, id);
-                 }
-             }
-             else{ console.log('ReadyState: '+ http.readyState); }
-         };
-         try {
-             http.send(null);
-         } catch(exception) {
-             console.log("Exception");
-             // this is expected
-         }
-     }
-
-     function doPong(host, pong){
-         console.log('Response from '+host+': '+pong+ 'ms');
-         if (Number(pong) < 1800){
-             console.log('Is alive');
-         }
-         else{
-             console.log('Is dead');
-         }
-     }
-     function pingpong(cell){
-         let row=cell.parentNode;
-         host = row.cells[1].firstChild.value
-         console.log(host);
-         let cb = row.cells[0].getElementsByTagName('input')[0];
-         ping(host, 80, doPong, cb)
-     }
-     function numPodsChange(control){
-         let table = document.getElementById("BlazerTable");
-         let oldV = table.rows.length;
-         let newV = control.value*1;
-         console.log(oldV);
-         console.log(newV);
-         // Delete row n-1 to 1
-         for(i=oldV; i>newV; i--){
-             console.log("killing "+i);
-             table.deleteRow(oldV-1);
-         }
-         for(i=oldV; i<newV; i++){
-             console.log("making "+i);
-             row = table.insertRow(-1);
-             let cell = row.insertCell(-1);
-             let input = document.createElement("input");
-             input.type = "checkbox";
-             cell.appendChild(input);
-             cell = row.insertCell(-1);
-             input = document.createElement("input");
-             input.type = "text";
-             input.value = "esp0"+i;
-             cell.appendChild(input);
-             cell = row.insertCell(-1);
-             cell.setAttribute('class', 'button');
-             cell.setAttribute('onclick', 'pingpong(this)');
-             cell.innerHTML= "Check";
-         }
-     }
-     function pageLoaded(){
-         // Set rows to 1
-     }
-    </script>
 </html>
