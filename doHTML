@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+use HTTP::Request::Common qw(POST);
+use LWP::UserAgent;
+
+sub minify{
+    my ($js) = @_;
+
+    my $js_min_url = "https://javascript-minifier.com/raw";
+
+    my $ua = LWP::UserAgent->new;
+    my $request = POST($js_min_url, [ 'input' => $js ]);
+    my $js_min = $ua->request($request)->decoded_content();
+
+    return $js_min;
+}
+
+$fno = 0;
+$out = 0;
+$text= "";
+while(<>){
+    if(/<\/script>/){
+        $out = 0;
+        print(minify($text), "\n");
+    }
+    if($out){
+        #print;
+        $text .= $_;
+    }else{
+        print;
+    }
+    if(/<script>/){
+        $out = 1;
+    }
+}
