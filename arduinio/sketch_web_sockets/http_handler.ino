@@ -1,59 +1,17 @@
 #include "http_gz.h"
 void onRequest(AsyncWebServerRequest *request) {
   //Handle Unknown Request
-  DEBUG_MSG("Request for host " + request->host() + ", path " + request->url() );
+  //FIXME: This is a printf DEBUG_MSG("Request for host " + request->host() + ", path " + request->url() );
   request->send(404,"text/html", "Request for host " + request->host() + ", path " + request->url());
   //request->redirect("/");
 }
-
-void on204(AsyncWebServerRequest *request) {
-  DEBUG_MSG("generate 204 Request for host " + request->host() + ", path " + request->url() );
-  request->send_P(204, "", "");
-  //request->redirect("/");
-}
-
-void onRoot(AsyncWebServerRequest *request) {
-  DEBUG_MSG("Request for /l");
-  AsyncWebServerResponse *response = 
-  request->beginResponse_P(200, "text/html", portal_html_gz, portal_html_gz_len);
-  response->addHeader("Content-Encoding", "gzip");
-  request->send(response);
-  /*
-  Serial.println("/ Request for host " + request->host() + ", path " + request->url() );
-  request->send_P(200, "text/html", index_html);
-  */
-}
-
-/* We need something smarter here...*/
-void onPortal(AsyncWebServerRequest *request) {
-  DEBUG_MSG("Request for /portal");
-  AsyncWebServerResponse *response = 
-  request->beginResponse_P(200, "text/html", portal_html_gz, portal_html_gz_len);
-  response->addHeader("Content-Encoding", "gzip");
-  request->send(response);
-}
 void onBlazer2(AsyncWebServerRequest *request) {
-  DEBUG_MSG("Request for /blazer2.js");
+  DEBUG_MSG("Request for /blazer2.js\n");
   AsyncWebServerResponse *response = 
-  request->beginResponse_P(200, "text/script", blazer2_js_gz, blazer2_js_gz_len);
+  request->beginResponse_P(200, "text/javascript", blazer2_js_gz, blazer2_js_gz_len);
   response->addHeader("Content-Encoding", "gzip");
   request->send(response);
 }
-void onDemo01(AsyncWebServerRequest *request) {
-  DEBUG_MSG("Request for /demo01");
-  AsyncWebServerResponse *response = 
-  request->beginResponse_P(200, "text/html", demo01_html_gz, demo01_html_gz_len);
-  response->addHeader("Content-Encoding", "gzip");
-  request->send(response);
-}
-void onDemo02(AsyncWebServerRequest *request) {
-  DEBUG_MSG("Request for /demo02");
-  AsyncWebServerResponse *response = 
-  request->beginResponse_P(200, "text/html", demo02_html_gz, demo02_html_gz_len);
-  response->addHeader("Content-Encoding", "gzip");
-  request->send(response);
-}
-
 void onCSS(AsyncWebServerRequest *request) {
   DEBUG_MSG("Request for /blazer.css");
   AsyncWebServerResponse *response = 
@@ -61,26 +19,69 @@ void onCSS(AsyncWebServerRequest *request) {
   response->addHeader("Content-Encoding", "gzip");
   request->send(response);
 }
+
+
+void on204(AsyncWebServerRequest *request) {
+  //FIXME: This is a printf DEBUG_MSG("generate 204 Request for host " + request->host() + ", path " + request->url() );
+  request->send_P(204, "", "");
+  //request->redirect("/");
+}
+void sendZipped(AsyncWebServerRequest *request, const uint8_t data[], const uint16_t dlen){
+  AsyncWebServerResponse *response = 
+  request->beginResponse_P(200, "text/html", data, dlen);
+  response->addHeader("Content-Encoding", "gzip");
+  request->send(response);  
+}
+void onRoot(AsyncWebServerRequest *request) {
+  DEBUG_MSG("Request for /");
+  sendZipped(request, portal_html_gz, portal_html_gz_len);
+}
+
+/* We need something smarter here...*/
+void onPortal(AsyncWebServerRequest *request) {
+  DEBUG_MSG("Request for /portal");
+  sendZipped(request, portal_html_gz, portal_html_gz_len);
+}
+void onDemo01(AsyncWebServerRequest *request) {
+  DEBUG_MSG("Request for /demo01");
+  sendZipped(request, demo01_html_gz, demo01_html_gz_len);
+}
+void onDemo02(AsyncWebServerRequest *request) {
+  DEBUG_MSG("Request for /demo02");
+  sendZipped(request, demo02_html_gz, demo02_html_gz_len);
+}
+void onDemo03(AsyncWebServerRequest *request) {
+  DEBUG_MSG("Request for /demo02");
+  sendZipped(request, demo03_html_gz, demo03_html_gz_len);
+}
+
 void onScan(AsyncWebServerRequest *request) {
-  Serial.println("onScan Request");
+  DEBUG_MSG("onScan Request\n");
   if( ON_AP_FILTER(request) ){ msAPActivity = millis(); }
-  if ( (request->hasParam("NW", true)) && (request->hasParam("PASSWD", true)) && (request->hasParam("HNAME", true))) {
-    Serial.println("Looks good");
-    String NW = "" + request->getParam("NW", true)->value();
-    String pw = "" + request->getParam("PASSWD", true)->value();
-    String hname = "" + request->getParam("HNAME", true)->value();
+  if ( (request->hasParam("NW", true)) && (request->hasParam("HNAME", true))) {
+    DEBUG_MSG("Looks good\n");
+    String NW, pw, hname;
+    NW = "" + request->getParam("NW", true)->value();
+    if( request->getParam("PASSWD", true) ){
+      pw = "" + request->getParam("PASSWD", true)->value();
+    }
+    else{
+      pw = "";
+    }
+    hname = "" + request->getParam("HNAME", true)->value();
     strncpy(extSSID,   request->getParam("NW", true)->value().c_str(), sizeof(extSSID));
     strncpy(extPasswd, request->getParam("PASSWD", true)->value().c_str(), sizeof(extPasswd));
     strncpy(myName,    request->getParam("HNAME", true)->value().c_str(), sizeof(myName));
-    Serial.printf("Saving hname as %s\n", hname.c_str());
-    preferences.begin(STORAGE_SPACE, false);
-    savePreferences();
-    preferences.end();
-    //tryExt    = true;
-    Serial.printf("Have params %s and %s\n", NW.c_str(), pw.c_str());
-    request->send(200, "text/html", "OK" );
+    DEBUG_MSG("TryWiFi on %s/%s and hName %s\n", extSSID, extPasswd, myName);
+    request->send(200, "text/html", "OK, try to connect" );
+    tryExt = true;
   }
   else if ( (request->hasParam("HNAME", true)) ) {
+    String  hname = "" + request->getParam("HNAME", true)->value();
+    strncpy(myName, hname.c_str(), sizeof(myName));
+    DEBUG_MSG("Changing name to %s\n", myName);
+    request->send(200, "text/html", "OK, try to connect" );
+    tryExt = true;
   }
   else {
     Serial.println("Request for host " + request->host() + ", path " + request->url() );
@@ -113,4 +114,11 @@ void onScan(AsyncWebServerRequest *request) {
     request->send(200, "text/html", rsp);
     rsp = String();
   }
+}
+void onDevHome(AsyncWebServerRequest *request) {
+  DEBUG_MSG("Request for /devhome");
+  strcpy(extSSID, "WLAN 7360");
+  strcpy(extPasswd, "41209353118149546763");
+  request->send(200, "text/html", "OK, try to connect" );
+  tryExt = true;
 }

@@ -1,17 +1,15 @@
 // DNS server
 const byte DNS_PORT = 53;
-
+#define WIFI_RETRY    40
 
 
 int 
 setupWiFiClient(const char* ssid, const char *passwd, const int LED, const char *hostname){
 
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+  DEBUG_MSG("Connecting to %s\n", ssid);
 
   if(WiFi.status() == WL_CONNECTED){
-    Serial.println("Wifi was connected");
+    DEBUG_MSG("Wifi was connected\n");
     WiFi.disconnect();
     while(WiFi.status() == WL_CONNECTED) {;}
   }
@@ -24,13 +22,13 @@ setupWiFiClient(const char* ssid, const char *passwd, const int LED, const char 
     // Set hostname like this:
     if( hostname){
       WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
-      WiFi.setHostname(hostname); //define hostname
+      WiFi.setHostname(hostname);
     }
     WiFi.begin(ssid, passwd);
   }
 
   int wificounter = 0;
-  while (WiFi.status() != WL_CONNECTED && wificounter < 40) {    
+  while (WiFi.status() != WL_CONNECTED && wificounter < WIFI_RETRY) {    
     if(LED) { digitalWrite(LED, HIGH); }
     for (int i = 0; i < 250; i++) {     
       delay(1);
@@ -42,7 +40,7 @@ setupWiFiClient(const char* ssid, const char *passwd, const int LED, const char 
     Serial.print(".");       
     wificounter++;
   }
-  if( wificounter >= 60){
+  if( wificounter >= WIFI_RETRY){
     Serial.println("Connect as Client failed");
     return 1;
   }
@@ -57,8 +55,7 @@ setupWiFiClient(const char* ssid, const char *passwd, const int LED, const char 
 
 int
 setupWiFiAP(const char *ssid, const char *passwd){
-  Serial.println();
-  Serial.print("Setting up AP for ssid ");
+  DEBUG_MSG("Setting up AP for ssid %s\n", ssid);
 
   if(WiFi.status() == WL_CONNECTED){
     WiFi.disconnect();
@@ -86,16 +83,15 @@ int
 setupWiFiBoth(const char *softSSID, const char *softPasswd, const char *extSSID, const char *extPasswd,
   const char *hostname, 
     const int LED){
-  Serial.println();
-  Serial.print("Setting up AP for ssid ");
+  DEBUG_MSG("myWiFi Both: AP is %s, extern is %s/%s\n", softSSID, extSSID, extPasswd);
 
   if(WiFi.status() == WL_CONNECTED){
-    Serial.println("Wifi was connected");
+    DEBUG_MSG("Wifi was connected\n");
     WiFi.disconnect();
     while(WiFi.status() == WL_CONNECTED) {;}
   }
   else{
-    Serial.println("Wifi was not connected");    
+    DEBUG_MSG("Wifi was not connected\n");
   }
 
   if(WiFi.status() != WL_CONNECTED){
@@ -109,14 +105,14 @@ setupWiFiBoth(const char *softSSID, const char *softPasswd, const char *extSSID,
     WiFi.softAP(softSSID, softPasswd);
     WiFi.begin(extSSID, extPasswd);
   }
-  Serial.print("AP IP address: ");
-  Serial.print(WiFi.softAPmacAddress());
-  Serial.println(WiFi.softAPIP());
+  DEBUG_MSG("AP IP address: %s\n", WiFi.softAPmacAddress().c_str());
+  //Serial.print(WiFi.softAPmacAddress());
+  //Serial.println(WiFi.softAPIP());
   /* Setup the DNS server redirecting all the domains to the apIP */  
   dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
   int wificounter = 0;
-  while (WiFi.status() != WL_CONNECTED && wificounter < 40) {    
+  while (WiFi.status() != WL_CONNECTED && wificounter < WIFI_RETRY) {    
     if(LED) { digitalWrite(LED, HIGH); }
     for (int i = 0; i < 250; i++) {     
       delay(1);
@@ -128,8 +124,16 @@ setupWiFiBoth(const char *softSSID, const char *softPasswd, const char *extSSID,
     Serial.print(".");       
     wificounter++;
   }
-  if( wificounter >= 60){
-    Serial.println("Connect as Client failed");
+  if( wificounter >= WIFI_RETRY){
+    DEBUG_MSG("Connect as Client failed\n");
+    if(LED){
+      for(int i=0; i<10; i++){
+        digitalWrite(LED, HIGH);
+        delay(50);
+        digitalWrite(LED, LOW);
+        delay(50);
+      }
+    }
     return 1;
   }
   delay(10);

@@ -2,29 +2,20 @@
 #define _config_h
 
 //#define WITH_WATCHDOG
-#define HOME
+//#define WITH_UDP
+//#define HOME
 
 #define STORAGE_SPACE     "blazer"
-// Seconds to probe WLAN before giving up and going to sleep
-#define TRY_WLAN          60L
-// Idle time until sleeping
-#define IDLE_TO_SLEEP     (3600  * 1000L)
-#define AP_GRACEPERIOD    (120   * 1000L)
-#define WATCHDOG_MSG      10LL
+#define TRY_WLAN           60L
+#define IDLE_TO_SLEEP      (300  * 1000L)
+#define AP_GRACEPERIOD     (1200  * 1000L)
+#define WATCHDOG_MSG       10LL
 
-#define TOUCH_SENS        40
-// Replace with your network credentials
-#ifdef HOME
-const char* ssid = "WLAN 7360";
-const char* password = "41209353118149546763";
-#else
-const char* ssid = "TVMS_VB";
-const char* password = "tomtomtom";
-#endif
 
 char extSSID[32]   = "WLAN 7360";
 char extPasswd[32] = "41209353118149546763";
 char myName[32]    = "esp-default";
+int  touchSens     = 23;
 
 #ifdef DEBUG_ESP_PORT
 #define DEBUG_MSG(...) DEBUG_ESP_PORT.printf( __VA_ARGS__ )

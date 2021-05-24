@@ -1,12 +1,24 @@
-/*********
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/esp32-websocket-server-arduino/
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
+/*********  
+ *   Some parts were inspired by Rui Santos
+ *   https://RandomNerdTutorials.com/esp32-websocket-server-arduino/
+ *   
+ *   WiFi Strategy:
+ *     1 Read hostname, SSID and Password from preferences
+ *     2 Try to connect and start AP at the same time
+ *     3 If connection successful: Shutdown AP and do further inits
+ *     4 If not: Keep AP open for some time. 
+ *     5 If user enters data: Write to preferences and goto 2
+ *     6 Shutdown AP and go to sleep
 *********/
+#define DEBUG_ESP_PORT Serial
+#include "config.h"
 
 // Import required libraries
 #include <WiFi.h>
+#ifdef WITH_UDP
+#  include <WiFiUdp.h>
+#endif
+
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
@@ -14,8 +26,6 @@
 #include <Preferences.h>
 
 
-#define DEBUG_ESP_PORT Serial
-#include "config.h"
 
 
 
@@ -37,6 +47,16 @@ bool tryExt = false;
 unsigned long msLastEvent;    // millis() of the last event
 unsigned long msLastTouch;    // millis() of the last event
 unsigned long msAPActivity;
+
+
+#ifdef WITH_UDP
+WiFiUDP udp;
+const char * udpAddress = "192.168.178.255";
+const int udpPort = 1304;
+char packetBuffer[255]; //buffer to hold incoming packet
+char  ReplyBuffer[] = "acknowledged";       // a string to send back
+#endif
+
 #ifdef WITH_WATCHDOG
 // Timer section
 volatile int interruptCounter;
@@ -89,8 +109,8 @@ void print_wakeup_reason(){
 }
 /************************************************************************/
 void notifyClients() {
-  char sString[12];
-  sprintf(sString, "STATE%d%d%d", ledState[0], ledState[1], ledState[2]);
+  char sString[256];
+  sprintf(sString, "STATE%d%d%d %lu %d", ledState[0], ledState[1], ledState[2], millis(), touchRead(T3));
   ws.textAll(sString);
   msLastEvent = millis();
 }
@@ -99,8 +119,9 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    DBG_MSG("Got cmd %s\n", data);
+    DEBUG_MSG("Got cmd %s\n", data);
     int len = strlen((char*)data);
+#if 0    
     if (strcmp((char*)data, "STATE") == 0) {
       notifyClients();
     }
@@ -129,6 +150,52 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       ledState[0] = ledState[1] = ledState[2]=0;
       notifyClients();
     }
+#else
+    char *req = (char *)data;
+    if     (!strncmp(req, "STATE", 4)){
+      notifyClients();
+    }
+    else if(!strncmp(req, "set", 3)){
+      req += 3;
+      int v = atoi(req) & 0x03;
+      ledState[v] = 1;
+      notifyClients();
+    }
+    else if(!strncmp(req, "clr", 3)){
+      req += 3;
+      int v = atoi(req) & 0x03;
+      ledState[v] = 0;
+      notifyClients();
+    }
+    else if((len==6) && !strncmp(req, "SET", 3)){
+      req += 3;
+      for(int i=0; i<3; i++){
+        int s = (int)req[i]-(int)'0';
+        ledState[i] = s ? 1 : 0;
+      }
+      notifyClients();
+      
+    }
+    else if(!strncmp(req, "CLR", 3)){
+      ledState[0] = ledState[1] = ledState[2]=0;
+      notifyClients();
+    }
+    else if(!strncmp(req, "GTT", 3)){
+      char rsp[256];
+      sprintf(rsp, "%d", touchSens);
+      ws.textAll(rsp);
+      msLastEvent = millis();      
+    }
+    else if(!strncmp(req, "STT", 3)){
+      req +=3;
+      int newT = atoi(req);
+      if((newT>0) && (newT<256)){
+        touchSens = newT;
+        savePreferences();
+      }
+      msLastEvent = millis();      
+    }
+#endif
   }
 }
 /************************************************************************/
@@ -158,14 +225,40 @@ void initWebSocket() {
   server.addHandler(&ws);
 }
 /************************************************************************/
+int tryConnectWiFi(){
+  DEBUG_MSG("WiFi: AP with %s, WiFi to %s\n", myName, extSSID);
+  int res = setupWiFiBoth(myName, "", extSSID, extPasswd, myName, ledPins[1]);
+  if( res ){
+    setupWiFiAP(myName, "");
+    // FIXME: StartScanning
+    DEBUG_MSG("Connect failed, keeping AP open\n");
+    msAPActivity = millis();
+    isAP = true;
+  }
+  else{
+    // Connect OK. Shutdown AP
+    DEBUG_MSG("Connect to %s as %s OK, shutting down AP\n", extSSID, myName);
+    isAP = false;
+    WiFi.enableAP(false);
+    // And save preferences
+    savePreferences();
+    if(!MDNS.begin(myName)) {
+       Serial.println("Error starting mDNS");
+    }
+    MDNS.addService("http", "tcp", 80);
+#ifdef WITH_UDP
+    udp.begin(WiFi.localIP(),udpPort);  
+#endif    
+  }
+  return res;
+}
+/************************************************************************/
 /************************************************************************/
 /************************************************************************/
 void setup(){
   Serial.begin(115200);
-  preferences.begin(STORAGE_SPACE, false);
-  loadPreferences();
-  preferences.end();
   while( !Serial ) { ; }
+  loadPreferences();
 
   // Setup LEDs
   for(int i=0; i<3; i++){
@@ -173,14 +266,15 @@ void setup(){
     digitalWrite(ledPins[i], LOW);    
   }
   esp_sleep_enable_touchpad_wakeup();  
-  touchAttachInterrupt(T3, gotTouch, TOUCH_SENS);
-  if(!MDNS.begin(myName)) {
-     Serial.println("Error starting mDNS");
-  }
+  touchAttachInterrupt(T3, gotTouch, touchSens);
+#if 0  
   if( setupWiFiClient(ssid, password, ledPins[1], myName) ){
     Serial.println("No WiFi found, giving up");
     goToSleep();    
   }
+#else
+  tryConnectWiFi();
+#endif  
   if(!MDNS.begin(myName)) {
      Serial.println("Error starting mDNS");
   }
@@ -205,11 +299,12 @@ void setup(){
   server.on("/portal.html", HTTP_ANY, onPortal);
   server.on("/demo01.html", HTTP_ANY, onDemo01);
   server.on("/demo02.html", HTTP_ANY, onDemo02);
+  server.on("/demo03.html", HTTP_ANY, onDemo03);
   server.on("/scan", HTTP_ANY, onScan);
+  server.on("/devhome", HTTP_ANY, onDevHome);
   server.on("/generate_204", HTTP_ANY, on204);
   // Start server
   server.begin();
-  savePreferences();
   msAPActivity = msLastTouch = msLastEvent = millis();
 }
 /************************************************************************/
@@ -220,14 +315,40 @@ void loop() {
   digitalWrite(ledPins[0], ledState[0]);
   digitalWrite(ledPins[1], ledState[1]);
   digitalWrite(ledPins[2], ledState[2]);
+
+#ifdef WITH_UDP
+  int packetSize = udp.parsePacket();
+  if (packetSize) {
+    Serial.print("Received packet of size ");
+    Serial.println(packetSize);
+    Serial.print("From ");
+    IPAddress remoteIp = udp.remoteIP();
+    Serial.print(remoteIp);
+    Serial.print(", port ");
+    Serial.println(udp.remotePort());
+    int len = udp.read(packetBuffer, 255);
+    if (len > 0) {
+      packetBuffer[len] = 0;
+    }
+    Serial.println("Contents:");
+    Serial.println(packetBuffer);  
+    udp.beginPacket(udp.remoteIP(), udp.remotePort());
+    udp.write((const uint8_t*)ReplyBuffer, sizeof(ReplyBuffer));
+    udp.endPacket();
+  }
+#endif  
   // if /scan got submitted
   if( tryExt ){
+    DEBUG_MSG("New test on extrnal WiFi\n");
     tryExt = false;
+    tryConnectWiFi();
   }
   if(touchDetected){
     touchDetected = false;
     if( millis() > msLastTouch + 50){
-      ws.textAll("TOUCH");
+      char sString[255];
+      sprintf(sString, "TOUCH%d%d%d %lu %d", ledState[0], ledState[1], ledState[2], millis(), touchRead(T3));
+      ws.textAll(sString);
       DEBUG_MSG("TOUCH: %d %lu\n", touchRead(T3), millis());
     }
     msLastTouch = msLastEvent = millis();
@@ -258,13 +379,20 @@ void loop() {
 }
 
 void loadPreferences(){
+  preferences.begin(STORAGE_SPACE, false);
   preferences.getString("hname", myName,   sizeof(myName) );
-  //preferences.getString("ssid",  extSSID,   sizeof(extSSID));
-  //preferences.getString("pswd",  extPasswd, sizeof(extSSID));
-  
+  preferences.getString("ssid",  extSSID,   sizeof(extSSID));
+  preferences.getString("pswd",  extPasswd, sizeof(extPasswd));
+  touchSens = preferences.getInt   ("tsns", 23);
+  preferences.end();
+  DEBUG_MSG("Load preferences: myName: <%s>, connect to %s/%s, touch: %d\n", myName, extSSID, extPasswd, touchSens);
 }
 void savePreferences(){
+  preferences.begin(STORAGE_SPACE, false);
   preferences.putString("hname",  myName);
   preferences.putString("ssid", extSSID);
   preferences.putString("pswd", extPasswd);
+  preferences.putInt   ("tsns", touchSens);
+  preferences.end();
+  DEBUG_MSG("Save preferences: myName: <%s>, connect to %s/%s, touch: %d\n", myName, extSSID, extPasswd, touchSens);
 }
