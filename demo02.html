@@ -25,7 +25,10 @@
                     <td>On time</td><td><input type="number" size="5" id="tOn" value="800" /></td>
                 </tr>
             </table>
-            <button id="Start" onclick="btnStartClick(this)">Start</button>
+            <p/>
+            <span class="button" id="Start"  onclick="btnStartClick(this)">Start</span>
+            <p/>
+            <!-- button type="button" class="button" id="Start" onclick="btnStartClick(this)">Start</button -->
             <table id="staticTable">
             </table>
         </center>
@@ -56,22 +59,14 @@
          }
          btn.innerHTML='Start';
      }
-     function dynamic(a,b){
-         // Clickong has no effect
-         console.log("dynamic: "+ a + ", "+b);
-     }
+     function dynamic(a,b){}
      function pageLoaded(){
          const queryString = window.location.search;
          const urlParams = new URLSearchParams(queryString);
-
          createLEDTable('staticTable', urlParams);
-         /* New code */
-         /* List of LEDs to blink */
          for(i=0; i<dict.length*3;i++){
              LEDs[i] = i;
          }
-         console.log(dict);
-         console.log(LEDs);
      }
     </script>
 </html>
