@@ -23,6 +23,20 @@ GZ_LIST=$(addsuffix _gz, $(subst .,_,$(SRC_CSS) $(SRC_JS) $(SRC_HTM)))
 check:
 	echo $(GZ_LIST)
 
+ESPOTA = python3 /home/tom/.arduino15/packages/esp32/hardware/esp32/1.0.6/tools/espota.py
+OTABIN = arduinio/sketch_web_sockets/sketch_web_sockets.ino.firebeetle32.bin
+
+esp00:
+	$(ESPOTA) -i $@ -I 192.168.178.13 -p 3232 -P 3232 -f $(OTABIN)
+esp01:
+	$(ESPOTA) -i $@ -I 192.168.178.13 -p 3232 -P 3232 -f $(OTABIN)
+esp02:
+	$(ESPOTA) -i $@ -I 192.168.178.13 -p 3232 -P 3232 -f $(OTABIN)
+esp03:
+	$(ESPOTA) -i $@ -I 192.168.178.13 -p 3232 -P 3232 -f $(OTABIN)
+esp04:
+	$(ESPOTA) -i $@ -I 192.168.178.13 -p 3232 -P 3232 -f $(OTABIN)
+
 tmp/%.css.gz: %.css
 	curl -X POST -s --data-urlencode 'input@$^' https://cssminifier.com/raw |gzip -9c > $@
 
