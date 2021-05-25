@@ -3,11 +3,14 @@
 
 //#define WITH_WATCHDOG
 //#define WITH_UDP
-//#define HOME
+#define   WITH_OTA
 
 #define STORAGE_SPACE     "blazer"
-#define TRY_WLAN           60L
+/* 60 seconds trying */
+#define WIFI_RETRY         60L
+// Go to sleep after 5 Minutes
 #define IDLE_TO_SLEEP      (300  * 1000L)
+// If no WiFi: Shutdown AP after 20 Minutes, then sleep
 #define AP_GRACEPERIOD     (1200  * 1000L)
 #define WATCHDOG_MSG       10LL
 
@@ -23,6 +26,7 @@ int  touchSens     = 23;
 #define DEBUG_MSG(...)
 #endif
 
+// Just for the css to lookup...
 #if 0
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
