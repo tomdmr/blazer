@@ -24,8 +24,9 @@
 #include <DNSServer.h>
 #include <ESPmDNS.h>
 #include <Preferences.h>
-
-
+#ifdef WITH_OTA
+#include <ArduinoOTA.h>
+#endif
 
 
 
@@ -121,36 +122,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     data[len] = 0;
     DEBUG_MSG("Got cmd %s\n", data);
     int len = strlen((char*)data);
-#if 0    
-    if (strcmp((char*)data, "STATE") == 0) {
-      notifyClients();
-    }
-    if((len>3)&&(strncmp((char*)data, "set", 3)==0)){
-      int s = data[3]-'0';
-      if(s>=0 && s<3){
-        ledState[s] = 1;
-      }
-      notifyClients();
-    }
-    else if((len>3)&&(strncmp((char*)data, "clr", 3)==0)){
-      int s = data[3]-'0';
-      if(s>=0 && s<3){
-        ledState[s] = 0;
-      }
-      notifyClients();
-    }
-    else if((len>6)&&(strncmp((char*)data, "SET",3)==0)){
-      for(int i=0; i<3; i++){
-        int s = data[3+i];
-        ledState[i] = s ? 1 : 0;
-      }
-      notifyClients();
-    }
-    else if(strcmp((char*)data, "CLR")==0){
-      ledState[0] = ledState[1] = ledState[2]=0;
-      notifyClients();
-    }
-#else
     char *req = (char *)data;
     if     (!strncmp(req, "STATE", 4)){
       notifyClients();
@@ -195,7 +166,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       }
       msLastEvent = millis();      
     }
-#endif
   }
 }
 /************************************************************************/
@@ -305,6 +275,34 @@ void setup(){
   server.on("/generate_204", HTTP_ANY, on204);
   // Start server
   server.begin();
+
+#ifdef WITH_OTA
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+  ArduinoOTA.begin();
+#endif
   msAPActivity = msLastTouch = msLastEvent = millis();
 }
 /************************************************************************/
@@ -315,6 +313,9 @@ void loop() {
   digitalWrite(ledPins[0], ledState[0]);
   digitalWrite(ledPins[1], ledState[1]);
   digitalWrite(ledPins[2], ledState[2]);
+#ifdef WITH_OTA
+  ArduinoOTA.poll();
+#endif
 
 #ifdef WITH_UDP
   int packetSize = udp.parsePacket();
