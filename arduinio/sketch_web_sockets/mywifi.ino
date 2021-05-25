@@ -1,7 +1,8 @@
 // DNS server
 const byte DNS_PORT = 53;
+#ifndef WIFI_RETRY
 #define WIFI_RETRY    40
-
+#endif
 
 int 
 setupWiFiClient(const char* ssid, const char *passwd, const int LED, const char *hostname){
