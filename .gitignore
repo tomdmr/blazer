@@ -4,3 +4,4 @@
 *#
 tmp/
 arduinio/sketch_web_sockets/http_gz.h
+arduinio/sketch_web_sockets/*.bin
