@@ -314,7 +314,7 @@ void loop() {
   digitalWrite(ledPins[1], ledState[1]);
   digitalWrite(ledPins[2], ledState[2]);
 #ifdef WITH_OTA
-  ArduinoOTA.poll();
+  ArduinoOTA.handle();
 #endif
 
 #ifdef WITH_UDP
