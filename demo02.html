@@ -29,7 +29,7 @@
             <span class="button" id="Start"  onclick="btnStartClick(this)">Start</span>
             <p/>
             <!-- button type="button" class="button" id="Start" onclick="btnStartClick(this)">Start</button -->
-            <table id="staticTable">
+            <table id="bTable">
             </table>
         </center>
     </body>
@@ -46,7 +46,7 @@
          let onTime  = document.getElementById('tOn').value* 1;
          btn.innerHTML='Running';
 
-         await Sleep(pDelay+Math.floor(Math.random()*pJitter));
+         await Sleep(sDelay+Math.floor(Math.random()*sJitter));
          for(i=0; i<LEDs.length; i++){
              r = ~~(LEDs[i]/3);
              c = LEDs[i] - 3*r;
@@ -55,18 +55,15 @@
              await Sleep(onTime);
              obj.webs.send('clr'+c);
              if(i<LEDs.length-1)
-                 await Sleep(sDelay+Math.floor(Math.random()*sJitter));
+                 await Sleep(pDelay+Math.floor(Math.random()*pJitter));
          }
          btn.innerHTML='Start';
      }
      function dynamic(a,b){}
      function pageLoaded(){
-         const queryString = window.location.search;
-         const urlParams = new URLSearchParams(queryString);
-         createLEDTable('staticTable', urlParams);
-         for(i=0; i<dict.length*3;i++){
-             LEDs[i] = i;
-         }
+         const urlParams = new URLSearchParams(window.location.search);
+         createLEDTable('bTable', urlParams);
+         for(i=0; i<dict.length*3;i++){ LEDs[i] = i; }
      }
     </script>
 </html>
