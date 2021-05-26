@@ -29,6 +29,7 @@
             <table id='bTable'></table>
         </center>
     </body>
+    <!-- TODO: Zeit bis Berührung in ms auf den Buttons anzeigen -->
     <script>
      LEDs   = [];
      let active = false;
@@ -41,7 +42,9 @@
      async function btnStartClick(){
          if( sBtn.innerHTML === 'Running')
              return;
-         btn.innerHTML='Running';
+         dict.forEach(function(item){item.btn.forEach(function(b){b.innerHTML='&nbsp;';});});
+         sBtn.innerHTML='Running';
+
          for(i=0; i<dict.length*3;i++){
              LEDs[i] = i;
          }
@@ -50,7 +53,7 @@
          sJitter = document.getElementById('sJitter').value* 1;
          pDelay  = document.getElementById('pDelay').value * 1;
          pJitter = document.getElementById('pJitter').value* 1;
-         await Sleep(pDelay+Math.floor(Math.random()*pJitter));
+         await Sleep(sDelay+Math.floor(Math.random()*sJitter));
          let led = LEDs.pop();
          let r = ~~(led/3);
          let c = led - 3*r;
@@ -69,6 +72,7 @@
              for(let i=0; i<3; i++){
                  if(b.state[i] == 1){
                      b.webs.send('clr'+i);
+                     b.btn[i].innerHTML= b.delta;
                      active = false;
                  }
              }
@@ -77,7 +81,7 @@
                  let r = ~~(led/3);
                  let c = led - 3*r;
                  let b = dict[r];
-                 await Sleep(sDelay+Math.floor(Math.random()*sJitter));
+                 await Sleep(pDelay+Math.floor(Math.random()*pJitter));
                  b.webs.send('set'+c);
                  active = true;
              }
