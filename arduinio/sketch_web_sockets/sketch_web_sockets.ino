@@ -168,7 +168,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         int s = (byte)req[i]-(byte)'0';
         ledState[i] = s ? 1 : 0;
       }
-      notifyClients();      
+      notifyClients();
     }
     else if(!strncmp(req, "CLR", 3)){
       ledState[0] = ledState[1] = ledState[2]=0;
