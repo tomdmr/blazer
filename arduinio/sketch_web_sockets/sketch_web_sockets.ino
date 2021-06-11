@@ -9,8 +9,21 @@
  *     4 If not: Keep AP open for some time. 
  *     5 If user enters data: Write to preferences and goto 2
  *     6 Shutdown AP and go to sleep
+ *
+ *  Web-Server (http, port 80).
+ *  request
+ *  /           : redirected to /portal
+ *  /portal     : landing page, to set addresse and select programs
+ *  /blazer2.js : helper functions
+ *  /demoXX.html: programs
+ *  /blazer.css : Style sheet
+ *  /scan       : Scan for WiFi around as, set hostname, select WLan and pw
+ *  /devhome    : Reset WiFi to attach to my home network
+ *  Not yet implemented, but planned:
+ *  /config?name=NAME&lan=SSID&pw=PASSWORD : quickset parameters
+ *
 *********/
-#define DEBUG_ESP_PORT Serial
+//#define DEBUG_ESP_PORT Serial
 #include "config.h"
 
 // Import required libraries
@@ -22,12 +35,17 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
-#include <ESPmDNS.h>
+#ifdef WITH_MDNS
+#  include <ESPmDNS.h>
+#endif
 #include <Preferences.h>
 #ifdef WITH_OTA
-#include <ArduinoOTA.h>
+#  include <ArduinoOTA.h>
 #endif
 
+#ifdef WITH_SPIFFS
+#  include <SPIFFS.h>
+#endif
 
 
 bool ledState[3] = {0, 0, 0};
@@ -109,8 +127,15 @@ void print_wakeup_reason(){
   }
 }
 /************************************************************************/
+/*
+ * Write out internal states to physical LEDs
+ * Broadcast state, internal time, and touch-state to all clients
+ */
 void notifyClients() {
   char sString[256];
+  digitalWrite(ledPins[0], ledState[0]);
+  digitalWrite(ledPins[1], ledState[1]);
+  digitalWrite(ledPins[2], ledState[2]);
   sprintf(sString, "STATE%d%d%d %lu %d", ledState[0], ledState[1], ledState[2], millis(), touchRead(T3));
   ws.textAll(sString);
   msLastEvent = millis();
@@ -121,7 +146,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     DEBUG_MSG("Got cmd %s\n", data);
-    int len = strlen((char*)data);
     char *req = (char *)data;
     if     (!strncmp(req, "STATE", 4)){
       notifyClients();
@@ -138,14 +162,13 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       ledState[v] = 0;
       notifyClients();
     }
-    else if((len==6) && !strncmp(req, "SET", 3)){
+    else if(!strncmp(req, "SET", 3)){
       req += 3;
       for(int i=0; i<3; i++){
-        int s = (int)req[i]-(int)'0';
+        int s = (byte)req[i]-(byte)'0';
         ledState[i] = s ? 1 : 0;
       }
-      notifyClients();
-      
+      notifyClients();      
     }
     else if(!strncmp(req, "CLR", 3)){
       ledState[0] = ledState[1] = ledState[2]=0;
@@ -173,19 +196,19 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
              void *arg, uint8_t *data, size_t len) {
   switch (type) {
     case WS_EVT_CONNECT:
-      Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      DEBUG_MSG("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
       break;
     case WS_EVT_DISCONNECT:
-      Serial.printf("WebSocket client #%u disconnected\n", client->id());
+      DEBUG_MSG("WebSocket client #%u disconnected\n", client->id());
       break;
     case WS_EVT_DATA:
       handleWebSocketMessage(arg, data, len);
       break;
     case WS_EVT_PONG:
-      Serial.printf("PONG\n");
+      DEBUG_MSG("PONG\n");
       break;
     case WS_EVT_ERROR:
-      Serial.printf("ERROR\n");
+      DEBUG_MSG("ERROR\n");
       break;
   }
 }
@@ -212,10 +235,12 @@ int tryConnectWiFi(){
     WiFi.enableAP(false);
     // And save preferences
     savePreferences();
+#ifdef WITH_MDNS
     if(!MDNS.begin(myName)) {
        Serial.println("Error starting mDNS");
     }
     MDNS.addService("http", "tcp", 80);
+#endif
 #ifdef WITH_UDP
     udp.begin(WiFi.localIP(),udpPort);  
 #endif    
@@ -245,9 +270,6 @@ void setup(){
 #else
   tryConnectWiFi();
 #endif  
-  if(!MDNS.begin(myName)) {
-     Serial.println("Error starting mDNS");
-  }
   // Print ESP Local IP Address
   Serial.println(WiFi.localIP());  
 
@@ -258,21 +280,18 @@ void setup(){
   timerAlarmWrite(timer, WATCHDOG_MSG * 1000000, true);
   timerAlarmEnable(timer);
 #endif
-  
+#ifdef WITH_SPIFFS
+  SPIFFS.begin(true);
+  // SPIFFS.exists("/nonexisting.txt")
+#endif  
   // Web-Server/Sockets
   initWebSocket();
   // Route for root / web page
   server.onNotFound(onRequest);
-  server.on("/",     HTTP_ANY, onRoot);
-  server.on("/blazer.css", HTTP_ANY, onCSS);
-  server.on("/blazer2.js", HTTP_ANY, onBlazer2);
-  server.on("/portal.html", HTTP_ANY, onPortal);
-  server.on("/demo01.html", HTTP_ANY, onDemo01);
-  server.on("/demo02.html", HTTP_ANY, onDemo02);
-  server.on("/demo03.html", HTTP_ANY, onDemo03);
   server.on("/scan", HTTP_ANY, onScan);
   server.on("/devhome", HTTP_ANY, onDevHome);
-  server.on("/generate_204", HTTP_ANY, on204);
+  server.on("/devhall", HTTP_ANY, onDevHall);
+  server.on("/config", HTTP_ANY, onConfig);
   // Start server
   server.begin();
 
@@ -280,13 +299,18 @@ void setup(){
   ArduinoOTA
     .onStart([]() {
       String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
+      if (ArduinoOTA.getCommand() == U_FLASH){
         type = "sketch";
-      else // U_SPIFFS
+      }
+      else{ // U_SPIFFS
         type = "filesystem";
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+#ifdef WITH_SPIFFS
+        SPIFFS.end();
+#endif
+      }
       Serial.println("Start updating " + type);
-    })
+      })
     .onEnd([]() {
       Serial.println("\nEnd");
     })
@@ -310,9 +334,6 @@ void setup(){
 void loop() {
   // Always
   ws.cleanupClients();
-  digitalWrite(ledPins[0], ledState[0]);
-  digitalWrite(ledPins[1], ledState[1]);
-  digitalWrite(ledPins[2], ledState[2]);
 #ifdef WITH_OTA
   ArduinoOTA.handle();
 #endif
@@ -374,7 +395,7 @@ void loop() {
   }
 
   if( !isAP && (millis() > msLastEvent + IDLE_TO_SLEEP)){
-    Serial.printf("Loop: going to sleep, millis=%ld, msLastEvent=%ld\n", millis(), msLastEvent);
+    DEBUG_MSG("Loop: going to sleep, millis=%ld, msLastEvent=%ld\n", millis(), msLastEvent);
     goToSleep();
   } 
 }
