@@ -4,6 +4,8 @@ const byte DNS_PORT = 53;
 #define WIFI_RETRY    40
 #endif
 
+#ifdef WITH_WIFI_CLIENT
+
 int 
 setupWiFiClient(const char* ssid, const char *passwd, const int LED, const char *hostname){
 
@@ -53,7 +55,9 @@ setupWiFiClient(const char* ssid, const char *passwd, const int LED, const char 
   Serial.println(WiFi.localIP());
   return 0;  
 }
+#endif
 
+#ifdef WITH_WIFI_AP
 int
 setupWiFiAP(const char *ssid, const char *passwd){
   DEBUG_MSG("Setting up AP for ssid %s\n", ssid);
@@ -79,7 +83,9 @@ setupWiFiAP(const char *ssid, const char *passwd){
   
   return 0;  
 }
+#endif
 
+#if defined(WITH_WIFI_CLIENT) && defined(WITH_WIFI_AP)
 int 
 setupWiFiBoth(const char *softSSID, const char *softPasswd, const char *extSSID, const char *extPasswd,
   const char *hostname, 
@@ -145,3 +151,4 @@ setupWiFiBoth(const char *softSSID, const char *softPasswd, const char *extSSID,
   Serial.println(WiFi.localIP());
   return 0;
 }
+#endif
