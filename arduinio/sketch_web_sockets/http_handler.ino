@@ -16,6 +16,41 @@ hash(const char* str){
 
 void onRequest(AsyncWebServerRequest *request) {
   const char *url = request->url().c_str();
+#ifdef WITH_SPIFFS
+  if(!strcmp(url, "/"))
+    url="/portal.html";
+  //Serial.printf("request for %s\n", url);
+
+  unsigned long long hs = hash( url );
+  char *ext = strrchr(url,'.');
+  if( !ext ){
+    request->send(404,"text/html", "Not found: " + request->url());
+    return;
+  }
+  char buf[256];
+  //sprintf(buf, "Request for %s, hash is %016llx%s\n", url, hs, ext);
+  sprintf(buf, "/%016llx%s", hash(url), ext);
+  Serial.println(buf;)
+  if(SPIFFS.exists(buf)){
+    AsyncWebServerResponse *response;
+    if(!strcmp(ext, ".html")){
+      response = request->beginResponse(SPIFFS, buf, "text/html");
+    }
+    else if(!strcmp(ext, ".js")){
+      response = request->beginResponse(SPIFFS, buf, "text/javascript");
+    }
+    else if(!strcmp(ext, ".css")){
+      response = request->beginResponse(SPIFFS, buf, "text/css");
+    }
+    else{
+      response = request->beginResponse(SPIFFS, buf, "text/plain");
+    }
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  }
+  else
+    request->send(404,"text/html", "Not found: " + request->url());
+#else
   if(!strcmp(url, "/demo01.html")){
     DEBUG_MSG("Request for /demo02");
     sendZipped(request, demo01_html_gz, demo01_html_gz_len);
@@ -47,22 +82,10 @@ void onRequest(AsyncWebServerRequest *request) {
     request->send(response);
   }
   else{
-    // Plug in SPIFFS code here. Later...
-#ifdef WITH_SPIFFS
-    unsigned long long hs = hash( url );
-    char buf[256];
-    sprintf(buf, "Request for %s, hash is %016llx\n", url, hs);
-    Serial.print(buf);
-    sprintf(buf, "/%016llx", hash(url));
-    if(SPIFFS.exists(buf)){
-    }
-    else
-      request->send(404,"text/html", "Not found: " + request->url());
-#else
     request->send(404,"text/html", "Not found: " + request->url());
-#endif
-    //request->redirect("/");
   }
+#endif
+ //request->redirect("/");
 }
 
 void sendZipped(AsyncWebServerRequest *request, const uint8_t data[], const uint16_t dlen){
