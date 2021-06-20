@@ -1,17 +1,22 @@
 #ifndef _config_h
 #define _config_h
 
-//#define WITH_WATCHDOG
-//#define WITH_UDP
+//#define   WITH_WATCHDOG
+//#define   WITH_UDP
+#define   WITH_WIFI_CLIENT
+#define   WITH_WIFI_AP
+
+#define   WITH_MDNS
 #define   WITH_OTA
+#define   WITH_SPIFFS
 
 #define STORAGE_SPACE     "blazer"
 /* 60 seconds trying */
 #define WIFI_RETRY         60L
 // Go to sleep after 5 Minutes
 #define IDLE_TO_SLEEP      (300  * 1000L)
-// If no WiFi: Shutdown AP after 20 Minutes, then sleep
-#define AP_GRACEPERIOD     (1200  * 1000L)
+// If no WiFi: Shutdown AP after 10 Minutes, then sleep
+#define AP_GRACEPERIOD     (600  * 1000L)
 #define WATCHDOG_MSG       10LL
 
 
