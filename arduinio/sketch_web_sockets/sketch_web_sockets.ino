@@ -13,17 +13,16 @@
  *  Web-Server (http, port 80).
  *  request
  *  /           : redirected to /portal
- *  /portal     : landing page, to set addresse and select programs
- *  /blazer2.js : helper functions
- *  /demoXX.html: programs
- *  /blazer.css : Style sheet
- *  /scan       : Scan for WiFi around as, set hostname, select WLan and pw
- *  /devhome    : Reset WiFi to attach to my home network
- *  Not yet implemented, but planned:
- *  /config?name=NAME&lan=SSID&pw=PASSWORD : quickset parameters
+ * /scan        : Start scanning for WiFis around
+ * /devhome     : Switch wifi to Home-WiFi
+ * /devhall     : Switch Wifi to gym-wifi
+ * /config      : Open config page, or quick run with
+ *                something like
+ *               /config?name=NAME&lan=SSID&pw=PASSWORD
+ * Everything else is grabbed from spiffs.
  *
 *********/
-//#define DEBUG_ESP_PORT Serial
+#define DEBUG_ESP_PORT Serial
 #include "config.h"
 
 // Import required libraries
@@ -230,6 +229,16 @@ int tryConnectWiFi(){
   }
   else{
     // Connect OK. Shutdown AP
+    for(int i=0; i<4; i++){
+      digitalWrite(ledPins[0], HIGH);
+      digitalWrite(ledPins[1], HIGH);
+      digitalWrite(ledPins[2], HIGH);
+      delay(50);
+      digitalWrite(ledPins[0], LOW);
+      digitalWrite(ledPins[1], LOW);
+      digitalWrite(ledPins[2], LOW);
+      delay(20);
+    }
     DEBUG_MSG("Connect to %s as %s OK, shutting down AP\n", extSSID, myName);
     isAP = false;
     WiFi.enableAP(false);
@@ -237,12 +246,12 @@ int tryConnectWiFi(){
     savePreferences();
 #ifdef WITH_MDNS
     if(!MDNS.begin(myName)) {
-       Serial.println("Error starting mDNS");
+      Serial.println("Error starting mDNS");
     }
     MDNS.addService("http", "tcp", 80);
 #endif
 #ifdef WITH_UDP
-    udp.begin(WiFi.localIP(),udpPort);  
+      udp.begin(WiFi.localIP(),udpPort);
 #endif    
   }
   return res;
@@ -282,7 +291,6 @@ void setup(){
 #endif
 #ifdef WITH_SPIFFS
   SPIFFS.begin(true);
-  // SPIFFS.exists("/nonexisting.txt")
 #endif  
   // Web-Server/Sockets
   initWebSocket();
@@ -294,7 +302,6 @@ void setup(){
   server.on("/config", HTTP_ANY, onConfig);
   // Start server
   server.begin();
-
 #ifdef WITH_OTA
   ArduinoOTA
     .onStart([]() {
