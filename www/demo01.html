@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css"/>
+        <script src="blazer2.js"></script>
+        <title>Some Demo</title>
+    </head>
+    <body onload="pgLoad()">
+        <h1>Demo 01 Click &amp; Toggle</h1>
+        <center>
+            <table id="staticTable">
+            </table>
+        </center>
+    </body>
+    <!-- Scripting should be terse, as this is not minified -->
+    <script>
+     function dynamic(a,b){
+         let obj = dict[a];
+         if (obj.state[b] == 0) obj.webs.send('set'+b);
+          else                  obj.webs.send('clr'+b);
+     }
+     function pgLoad(){
+         const queryString = window.location.search;
+         const urlParams = new URLSearchParams(queryString);
+         createLEDTable('staticTable', urlParams);
+         console.log(dict);
+     }
+    </script>
+</html>

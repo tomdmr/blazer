@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="blazer2.js"></script>
+        <title>Blazer Phaser Main Portal</title>
+    </head>
+    <body>
+        <h1>Blazer Main Portal</h1>
+        <center>
+            <table>
+                <tr>
+                    <td>Number of pods</td>
+                    <td><input type="number" min="1" max="8" value="4" id="numPods" onchange="numPodsChange(this)"/></td>
+                </tr>
+                <tr>
+                    <td>Name of Pods</td>
+                    <td><input type="text" value="esp " id="namePods" onchange="namePods(this)"/></td>
+                </tr>
+            </table>
+            <table id="BlazerTable">
+                <tr>
+                    <td><input type="checkbox" name="Blazers" /></td>
+                    <td><input type="text" name ="host" value="esp00"/></td>
+                    <td class="button" onclick="pingpong(this)">Check</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" name="Blazers" /></td>
+                    <td><input type="text" name ="host" value="esp01"/></td>
+                    <td class="button" onclick="pingpong(this)">Check</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" name="Blazers" /></td>
+                    <td><input type="text" name ="host" value="esp02"/></td>
+                    <td class="button" onclick="pingpong(this)">Check</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" name="Blazers" /></td>
+                    <td><input type="text" name ="host" value="esp03"/></td>
+                    <td class="button" onclick="pingpong(this)">Check</td>
+                    <td></td>
+                </tr>
+
+            </table>
+            <table>
+                <tr>
+                    <td class="button btn_g-off" onclick="launch('demo01.html')">Demo 1</td>
+                    <td class="button btn_g-off" onclick="launch('demo02.html')">Demo 2</td>
+                    <td class="button btn_g-off" onclick="launch('demo03.html')">Demo 3</td>
+                    <td class="button btn_r-off" onclick="">Demo 4</td>
+                </tr>
+                <tr>
+                    <td class="button btn_r-off" onclick="">Demo 5</td>
+                    <td class="button btn_r-off" onclick="">Demo 6</td>
+                    <td class="button btn_r-off" onclick="">Demo 7</td>
+                    <td class="button btn_r-off" onclick="">Demo 8</td>
+                </tr>
+            </table>
+        </center>
+        <script>
+         function numPodsChange(control){
+             let table = document.getElementById("BlazerTable");
+             let oldV = table.rows.length;
+             let newV = control.value*1;
+             console.log(oldV);
+             console.log(newV);
+             // Delete row n-1 to 1
+             for(i=oldV; i>newV; i--){
+                 console.log("killing "+i);
+                 table.deleteRow(oldV-1);
+             }
+             for(i=oldV; i<newV; i++){
+                 console.log("making "+i);
+                 row = table.insertRow(-1);
+                 let cell = row.insertCell(-1);
+                 let input = document.createElement("input");
+                 input.type = "checkbox";
+                 cell.appendChild(input);
+                 cell = row.insertCell(-1);
+                 input = document.createElement("input");
+                 input.type = "text";
+                 input.value = "esp0"+i;
+                 cell.appendChild(input);
+                 cell = row.insertCell(-1);
+                 cell.setAttribute('class', 'button');
+                 //cell.setAttribute('onclick', 'pingpong(this)');
+                 cell.innerHTML= "Check";
+             }
+         }
+        </script>
+    </body>
+</html>

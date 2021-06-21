@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="blazer2.js"></script>
+        <title>Some Demo</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Demo 03 Touch&amp;Go</h1>
+        <center>
+            <table id="settings">
+                <tr><td colspan="2">Startverzögerung</td></tr>
+                <tr>
+                    <td>Delay</td><td><input type="number" size="5" id="sDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="sJitter" value="500" /></td>
+                </tr>
+                <tr><td colspan="2">Einzelschritte</td></tr>
+                <tr>
+                    <td>Delay</td><td><input type="number" size="5" id="pDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="pJitter" value="500" /></td>
+                </tr>
+            </table>
+            <p/>
+            <span class="button" id="Start" onclick="btnStartClick()">Start</span>
+            <p/>
+            <!-- button type="button" class="button" id="Start" onclick="btnStartClick(this)">Start</button -->
+            <table id='bTable'></table>
+        </center>
+    </body>
+    <!-- TODO: Zeit bis Berührung in ms auf den Buttons anzeigen -->
+    <script>
+     LEDs   = [];
+     let active = false;
+     let sBtn = document.getElementById('Start');
+     let sDelay  = document.getElementById('sDelay').value * 1;
+     let sJitter = document.getElementById('sJitter').value* 1;
+     let pDelay  = document.getElementById('pDelay').value * 1;
+     let pJitter = document.getElementById('pJitter').value* 1;
+     
+     async function btnStartClick(){
+         if( sBtn.innerHTML === 'Running')
+             return;
+         dict.forEach(function(item){item.btn.forEach(function(b){b.innerHTML='&nbsp;';});});
+         sBtn.innerHTML='Running';
+
+         for(i=0; i<dict.length*3;i++){
+             LEDs[i] = i;
+         }
+         shuffle(LEDs);
+         sDelay  = document.getElementById('sDelay').value * 1;
+         sJitter = document.getElementById('sJitter').value* 1;
+         pDelay  = document.getElementById('pDelay').value * 1;
+         pJitter = document.getElementById('pJitter').value* 1;
+         await Sleep(sDelay+Math.floor(Math.random()*sJitter));
+         let led = LEDs.pop();
+         let r = ~~(led/3);
+         let c = led - 3*r;
+         let b = dict[r];
+         b.webs.send('set'+c);
+         active=true;
+     }
+     async function myChain(v, b){
+         //console.log(v);
+         //console.log(b.delta);
+         //console.log(b.state);
+         if(active && (v === 'TOUCH')){
+             console.log(b);
+             // Check if it the right pod for lighting
+             // Switch off
+             for(let i=0; i<3; i++){
+                 if(b.state[i] == 1){
+                     b.webs.send('clr'+i);
+                     b.btn[i].innerHTML= b.delta;
+                     active = false;
+                 }
+             }
+             let led = LEDs.pop();
+             if (typeof led !== 'undefined'){
+                 let r = ~~(led/3);
+                 let c = led - 3*r;
+                 let b = dict[r];
+                 await Sleep(pDelay+Math.floor(Math.random()*pJitter));
+                 b.webs.send('set'+c);
+                 active = true;
+             }
+             else{
+                 sBtn.innerHTML = 'Start';
+             }
+         }
+         return;
+     }
+     function dynamic(r,c){
+         let b = dict[r];
+         if (b.state[c] == 0) b.webs.send('set'+c);
+         else                 b.webs.send('clr'+c);
+     }
+     function pageLoaded(){
+         const urlParams = new URLSearchParams(window.location.search);
+         createLEDTable('bTable', urlParams);
+         messageChain = myChain;
+     }
+    </script>
+</html>
