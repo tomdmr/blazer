@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="blazer2.js"></script>
+        <title>Some Demo 3</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Demo 03 Thresholds</h1>
+        <center>
+            <table id="settings">
+            </table>
+            <p/>
+            <span class="button" id="Start"  onclick="btnStartClick(this)">Start</span>
+            <p/>
+            <table id="staticTable">
+            </table>
+        </center>
+    </body>
+    <script>
+     function onChain(v, b){
+         //b.btn[3].innerHTML = b.touch;
+         b.btn[3].value = b.touch;
+     }         
+     function dynamic(a,b){
+         console.log("dynamic: "+ a + ", "+b);
+         let obj = dict[a];
+         console.log(obj.touch);
+         if (obj.state[b] == 0){
+             obj.webs.send('set'+b);
+             if(b==1){
+                 obj.webs.send("GTT");
+             }
+             if(b==2){
+                 console.log(obj.btn[3].value);
+                 obj.webs.send('STT'+obj.btn[3].value);
+             }
+         }
+         else{
+             obj.webs.send('clr'+b);
+         }
+     }
+     function pageLoaded(){
+         const queryString = window.location.search;
+         const urlParams = new URLSearchParams(queryString);
+         createLEDTable('staticTable', urlParams);
+         /* New code */
+         let rows = document.getElementById('staticTable').rows;
+         for(i=0; i<rows.length; i++){
+             let row = rows[i];
+             let cell = row.insertCell(-1);
+             console.log(cell);
+             /*
+             cell.setAttribute('id', 'D'+i+'3');
+             cell.setAttribute('class', 'button button-off');
+             cell.innerHTML = '0';
+             */
+             let input = document.createElement("input");
+             input.type = "number";
+             input.value = 0;
+             cell.appendChild(input);
+             
+             dict[i].btn.push(input);
+         }
+         messageChain = onChain;
+     }
+    </script>
+</html>
