@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <link href="blazer.css" rel="stylesheet" type="text/css" />
+        <script src="blazer2.js"></script>
+        <title>Some Demo</title>
+    </head>
+    <body onload="pageLoaded()">
+        <h1>Demo 06 Running fixed number</h1>
+        <center>
+            <table id="settings">
+                <tr><td colspan="2">Startverzögerung</td></tr>
+                <tr>
+                    <td>Delay </td><td><input type="number" size="5" id="sDelay" value="2000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="sJitter" value="500" /></td>
+                </tr>
+                <tr><td colspan="2">Einzelschritte</td></tr>
+                <tr>
+                    <td>Delay </td><td><input type="number" size="5" id="pDelay" value="4000" /></td>
+                    <td>Jitter</td><td><input type="number" size="5" id="pJitter" value="500" /></td>
+                </tr>
+                <tr>
+                    <td>On time</td><td><input type="number" size="5" id="tOn" value="1500" /></td>
+                </tr>
+                <tr>
+                    <td>Wiederholungen</td><td><input type="number" size="5" id="nRepeat" value="6" /></td>
+                </tr>
+            </table>
+            <p/>
+            <span class="button" id="Start"  onclick="btnStartClick(this)">Start</span>
+            <p/>
+            <!-- button type="button" class="button" id="Start" onclick="btnStartClick(this)">Start</button -->
+            <table id="bTable">
+            </table>
+        </center>
+    </body>
+    <script>
+     LEDs   = [];
+     async function btnStartClick(btn){
+         if( btn.innerHTML === 'Running')
+             return;
+         LEDs=[];
+         let select = [
+             document.getElementById('C0').checked,
+             document.getElementById('C1').checked,
+             document.getElementById('C2').checked,
+         ];
+         let nLEDs = (document.getElementById('bTable').rows.length-1)*3;
+         let nRepeat =  document.getElementById('nRepeat').value;
+         while( LEDs.length < nRepeat ){
+             let cnd = Math.floor(Math.random() * nLEDs );
+             if (select[cnd % 3])
+                 LEDs.push( cnd )
+         }
+         //return;
+         /*
+            for(i=0; i<dict.length*3;i++){
+            if (select[i % 3])
+            LEDs.push( i )
+            }*/
+         shuffle(LEDs);
+         console.log(LEDs);
+         let sDelay  = document.getElementById('sDelay').value * 1;
+         let sJitter = document.getElementById('sJitter').value* 1;
+         let pDelay  = document.getElementById('pDelay').value * 1;
+         let pJitter = document.getElementById('pJitter').value* 1;
+         let onTime  = document.getElementById('tOn').value* 1;
+         btn.innerHTML='Running';
+
+         await Sleep(sDelay+Math.floor(Math.random()*sJitter));
+         for(i=0; i<LEDs.length; i++){
+             r = ~~(LEDs[i]/3);
+             c = LEDs[i] - 3*r;
+             let obj = dict[r];
+             obj.webs.send('set'+c);
+             await Sleep(onTime);
+             obj.webs.send('clr'+c);
+             if(i<LEDs.length-1)
+                 await Sleep(pDelay+Math.floor(Math.random()*pJitter));
+         }
+         btn.innerHTML='Start';
+     }
+     function dynamic(a,b){}
+     function pageLoaded(){
+         const urlParams = new URLSearchParams(window.location.search);
+         createLEDTable('bTable', urlParams);
+         document.getElementById('nRepeat').value = (document.getElementById('bTable').rows.length-1)*3;
+     }
+    </script>
+</html>
