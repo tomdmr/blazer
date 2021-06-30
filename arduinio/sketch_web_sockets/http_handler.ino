@@ -1,4 +1,4 @@
-#include "http_gz.h"
+//#include "http_gz.h"
 
 #ifdef WITH_SPIFFS
 // Hash function from djb.
@@ -30,7 +30,7 @@ void onRequest(AsyncWebServerRequest *request) {
   char buf[256];
   //sprintf(buf, "Request for %s, hash is %016llx%s\n", url, hs, ext);
   sprintf(buf, "/%016llx%s", hash(url), ext);
-  Serial.println(buf;)
+  Serial.println(buf);
   if(SPIFFS.exists(buf)){
     AsyncWebServerResponse *response;
     if(!strcmp(ext, ".html")){
