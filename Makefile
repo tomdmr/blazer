@@ -67,6 +67,7 @@ $(SPIFFS): $(addprefix data/, $(ALL_WWW_HASH))
 
 $(OTABIN): $(OTASRC)
 	echo recompile!
+	/bin/false
 
 all: $(OTABIN) $(SPIFFS)
 
